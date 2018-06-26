@@ -4,6 +4,7 @@
 pragma solidity 0.4.24;
 
 
-interface ProofVerifierInterface {
-    function Verify( uint256 block_no, uint256 leaf_hash, uint256[] proof ) external view returns (bool);
+interface ProofVerifierInterface
+{
+    function Verify( bytes32 leaf_hash, bytes proof ) external view returns (bool);
 }

@@ -12,7 +12,10 @@ library Merkle
     // 1 << 255
     uint256 internal constant ONE_SHL_255 = 57896044618658097711785492504343953926634992332820282019728792003956564819968;
 
-    function Hash( uint256 a, uint256 b )
+    /**
+    * Hashes two items to form a merkle tree node
+    */
+    function HashNode( uint256 a, uint256 b )
         internal pure
         returns (uint256)
     {
@@ -51,9 +54,9 @@ library Merkle
             item = path[i];
 
             if ((item & ONE_SHL_255) > 0) {
-                node = Hash(node, item ^ ONE_SHL_255);
+                node = HashNode(node, item ^ ONE_SHL_255);
             } else {
-                node = Hash(item, node);
+                node = HashNode(item, node);
             }
         }
         

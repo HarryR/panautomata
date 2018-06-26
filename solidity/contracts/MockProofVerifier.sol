@@ -1,5 +1,5 @@
 // Copyright (c) 2018 HarryR. All Rights Reserved.
-// SPDX-License-Identifier: LGPL-3.0+
+// SPDX-License-Identifier: GPL-3.0+
 
 pragma solidity 0.4.24;
 
@@ -7,12 +7,12 @@ pragma solidity 0.4.24;
 import "./ProofVerifierInterface.sol";
 
 
-contract MockProofVerifier is ProofVerifierInterface {
-    function Verify( uint256 block_no, uint256 leaf_hash, uint256[] proof )
+contract MockProofVerifier is ProofVerifierInterface
+{
+    function Verify( bytes32 leaf_hash, bytes proof )
         external view returns (bool)
     {
-        require( block_no > 0 );
-        require( leaf_hash > 0 );
+        require( leaf_hash != 0x0 );
         require( proof.length > 0 );
         return true;
     }

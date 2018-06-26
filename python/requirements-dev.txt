@@ -2,3 +2,4 @@ pyflakes
 pylint
 vulture
 coverage
+wheel

@@ -5,7 +5,7 @@ GANACHE ?= $(ROOT_DIR)/node_modules/.bin/ganache-cli
 TRUFFLE ?= $(ROOT_DIR)/node_modules/.bin/truffle
 
 
-all: check-prereqs node_modules compile
+all: check-prereqs node_modules lint compile
 
 clean:
 	rm -rf build
@@ -19,6 +19,10 @@ check-prereqs:
 		false; \
 	fi
 
+$(TRUFFLE): node_modules
+
+$(GANACHE): node_modules
+
 node_modules:
 	$(NPM) install
 
@@ -30,20 +34,22 @@ fedora-dev:
 	curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
 	nvm install --lts
 
-test:
+test: $(TRUFFLE)
 	$(NPM) run test
 
-$(TRUFFLE): node_modules
+testrpc-a: $(TRUFFLE)
+	$(NPM) run testrpc-a
 
-$(GANACHE): node_modules
+testrpc-b: $(TRUFFLE)
+	$(NPM) run testrpc-b
 
-deploy-a:
+deploy-a: $(TRUFFLE)
 	$(TRUFFLE) deploy-a --network testrpc-a --reset
 
-deploy-b:
+deploy-b: $(TRUFFLE)
 	$(TRUFFLE) deploy-b --network testrpc-b --reset
 
-compile:
+compile: $(TRUFFLE)
 	$(TRUFFLE) compile
 
 console: $(TRUFFLE)

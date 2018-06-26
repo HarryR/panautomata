@@ -1,0 +1,28 @@
+{
+    "name": "panautomata-solidity",
+    "version": "0.1.0",
+    "description": "Ethereum contracts for Panautomata",
+    "main": "truffle.js",
+    "repository": "https://github.com/HarryR/panautomata.git",
+    "author": "panautomata@midnight-labs.org",
+    "license": "GPL-3.0+",
+    "dependencies": {
+        "solc": "^0.4.24",
+        "truffle": "^4.1.11"
+    },
+    "devDependencies": {
+        "ganache-cli": "^6.1.3",
+        "solidity-coverage": "^0.5.4",
+        "solhint": "^1.1.10"
+    },
+    "scripts": {
+        "testrpc-a": "ganache-cli --port 8545 --gasLimit 0xFFFFFFF --gasPrice 1 --networkId 1234 --deterministic grape crisp enroll avoid satoshi picnic term dice gown grocery situate depart",
+        "testrpc-b": "ganache-cli --port 8546 --gasLimit 0xFFFFFFF --gasPrice 1 --networkId 5678 --deterministic grape crisp enroll avoid satoshi picnic term dice gown grocery situate depart",
+        "compile": "truffle compile",
+        "deploy-a": "truffle deploy --network testrpca",
+        "deploy-b": "truffle deploy --network testrpcb",
+        "test": "truffle test",
+        "coverage": "solidity-coverage",
+        "lint": "solhint contracts/**/*.sol"
+    }
+}

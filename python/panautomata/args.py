@@ -60,6 +60,7 @@ def make_uint_n(num):
         return value
     return arg_uint_n
 
+
 arg_uint256 = make_uint_n(256)
 
 
@@ -70,6 +71,5 @@ def arg_ethrpc(ctx, param, value):
     port = int(port)
     require(port > 0)
     require(port < 0xFFFF)
-    if port == 443:
-        return EthJsonRpc(ip_addr, port, True)
-    return EthJsonRpc(ip_addr, port)
+    use_tls = port == 443
+    return EthJsonRpc(ip_addr, port, use_tls)

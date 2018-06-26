@@ -1,3 +1,4 @@
 eth-abi
+rlp
 click
 requests

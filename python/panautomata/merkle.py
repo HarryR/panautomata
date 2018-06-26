@@ -8,8 +8,6 @@ Provides an interface to produce merkle trees, proofs, etc.
 """
 from __future__ import print_function
 
-import random
-
 from .crypto import keccak_256
 from .utils import zpad, int_to_big_endian, bit_clear, bit_test, bit_set, bytes_to_int
 
@@ -120,8 +118,6 @@ def merkle_proof(leaf, path, root):
 
 
 def main():
-    from binascii import hexlify
-
     # Create 99 trees of 1..N items
     for i in range(1, 100):
         items = list(range(0, i))
@@ -133,6 +129,7 @@ def main():
             assert merkle_proof(item, proof, root) is True
 
     """
+    from binascii import hexlify
     print('0x' + hexlify(serialize(item)).decode('ascii'), ',',
           '0x' + hexlify(serialize(root)).decode('ascii'), ',',
           '[',

@@ -2,16 +2,15 @@ PYTHON ?= python3
 NAME = panautomata
 
 PYLINT_IGNORE ?= C0330,invalid-name,line-too-long,missing-docstring,bad-whitespace,consider-using-ternary,wrong-import-position,wrong-import-order,trailing-whitespace
-
+FLAKE8_IGNORE ?= E501
 
 #######################################################################
 
 
-all:
-	@echo "See README.md"
+all: lint-pyflakes test lint
 
 clean:
-	rm -rf build dist *.egg-info
+	rm -rf build dist *.egg-info .mypy_cache
 
 
 #######################################################################
@@ -56,4 +55,11 @@ lint-vulture:
 lint-pylint:
 	$(PYTHON) -mpylint -d $(PYLINT_IGNORE) $(NAME) || true
 
-lint:lint-pyflakes lint-vulture lint-pylint
+# XXX: doesn't detect modules!
+lint-mypy:
+	$(PYTHON) -mmypy $(NAME)
+
+lint-flake8:
+	$(PYTHON) -mflake8 --ignore=$(FLAKE8_IGNORE) || true
+
+lint: lint-pyflakes lint-vulture lint-pylint lint-flake8

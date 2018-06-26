@@ -3,9 +3,9 @@
 
 pragma solidity 0.4.24;
 
-import "./ERC20.sol";
+import "../std/ERC20.sol";
 
-import "./ProofVerifierInterface.sol";
+import "../ProofVerifierInterface.sol";
 
 
 /* Logic flows:
@@ -39,9 +39,11 @@ The ideal path, steps 3 and 4 can occur in any order.
 Step 4 doesn't require a state proof, as the withdraw/receiver address
 can be verified by `msg.sender`
 
+        On Chain A               On Chain B
+
     1. InitiatorPropose (with deposit)
 
-    2.                         CounterpartyAccept (with deposit)
+    2.                        CounterpartyAccept (with deposit)
 
     3. CounterpartyWithdraw (recieves deposit)
 
@@ -55,6 +57,8 @@ Initiator can pre-emptively cancel the swap on the other chain,
 this blocks the counterparty from accepting and allows a withdraw
 on the initiators chain.
 
+        On Chain A               On Chain B
+
     1. InitiatorPropose (with deposit)
 
     2.                         InitiatorCancel (blocks counterparty action)
@@ -65,9 +69,11 @@ on the initiators chain.
 
 Counterparty Reject
 
+        On Chain A               On Chain B
+
     1. InitiatorPropose (with deposit)
 
-    2.                          CounterpartyReject (cancels)
+    2.                         CounterpartyReject (cancels)
 
     3. InitiatorRefund (recieves deposit)
 

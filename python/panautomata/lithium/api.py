@@ -131,6 +131,6 @@ def api_verify_proof():
         hex_leaf = unhexlify(leaf)
         proof = merkle_proof(hex_leaf, proof, root)
 
-        return jsonify({"verified":proof})
+        return jsonify({"verified": proof})
     else:
         return "No valid leaf or path provided."

@@ -7,6 +7,8 @@ Crypto: Has a load of useful crypto stuff
 """
 import struct
 from collections import namedtuple
+
+# XXX: replace with something else, don't depend on ethereum repo?
 from ethereum.utils import big_endian_to_int, encode_int32
 
 from sha3 import keccak_256

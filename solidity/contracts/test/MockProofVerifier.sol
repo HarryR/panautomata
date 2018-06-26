@@ -4,7 +4,7 @@
 pragma solidity 0.4.24;
 
 
-import "./ProofVerifierInterface.sol";
+import "../ProofVerifierInterface.sol";
 
 
 contract MockProofVerifier is ProofVerifierInterface

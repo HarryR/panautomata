@@ -3,3 +3,5 @@ pylint
 vulture
 coverage
 wheel
+mypy
+flake8

@@ -45,10 +45,10 @@ testrpc-b: $(TRUFFLE)
 	$(NPM) run testrpc-b
 
 deploy-a: $(TRUFFLE)
-	$(TRUFFLE) deploy-a --network testrpc-a --reset
+	$(TRUFFLE) deploy-a --network testrpc_a --reset
 
 deploy-b: $(TRUFFLE)
-	$(TRUFFLE) deploy-b --network testrpc-b --reset
+	$(TRUFFLE) deploy-b --network testrpc_b --reset
 
 compile: $(TRUFFLE)
 	$(TRUFFLE) compile

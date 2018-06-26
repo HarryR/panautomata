@@ -204,7 +204,7 @@ class Lithium(object):
         self._run_event = threading.Event()
         self._run_event.set()
 
-        self._relay_to = threading.Thread(target=self.lithium_instance, \
+        self._relay_to = threading.Thread(target=self.lithium_instance,
                                           args=(self._run_event, rpc_from, rpc_to, from_account, to_account, lock, link, batch_size))
         self._relay_to.start()
 

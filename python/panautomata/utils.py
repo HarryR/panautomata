@@ -27,11 +27,11 @@ safe_ord = ord if sys.version_info.major == 2 else lambda x: x if isinstance(x, 
 bytes_to_int = lambda x: reduce(lambda o, b: (o << 8) + safe_ord(b), [0] + list(x))
 
 
-bit_clear = lambda n, b: n ^ (1<<(b-1)) if n & 1<<(b-1) else n
+bit_clear = lambda n, b: n ^ (1<<b) if n & 1<<b else n
 
-bit_set = lambda n, b: n | (1<<(b-1))
+bit_set = lambda n, b: n | (1<<b)
 
-bit_test = lambda n, b: 0 != (n & (1<<(b-1)))
+bit_test = lambda n, b: 0 != (n & (1<<b))
 
 
 def packl(lnum):

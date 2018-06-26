@@ -12,6 +12,12 @@ This is an experimental research project to make it easy for developers to write
  * Swap example works end-to-end
  * Getting started guide
 
+## Toolchain Todo
+
+ * Signed commits (one key per repo)
+ * Travis CI
+ * Code coverage
+ * Docker image
 
 ## Licensing
 

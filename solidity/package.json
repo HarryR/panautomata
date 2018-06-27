@@ -8,7 +8,8 @@
     "license": "GPL-3.0+",
     "dependencies": {
         "solc": "^0.4.24",
-        "truffle": "^4.1.11"
+        "truffle": "^4.1.11",
+        "openzeppelin-solidity": "^1.10.0"
     },
     "devDependencies": {
         "ganache-cli": "^6.1.3",

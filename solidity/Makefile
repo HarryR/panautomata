@@ -24,6 +24,9 @@ $(TRUFFLE): node_modules
 $(GANACHE): node_modules
 
 node_modules:
+
+.PHONY: npm-install
+npm-install:
 	$(NPM) install
 
 lint:

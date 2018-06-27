@@ -25,6 +25,7 @@ contract LithiumLink
     constructor ( uint256 genesis )
         public
     {
+        require( genesis > 0 );
         Owner = msg.sender;
         LatestBlock = genesis;
     }

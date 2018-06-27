@@ -7,7 +7,7 @@ FLAKE8_IGNORE ?= E501
 #######################################################################
 
 
-all: lint-pyflakes test lint
+all: lint-pyflakes test bdist
 
 clean:
 	rm -rf build dist *.egg-info .mypy_cache
@@ -50,14 +50,14 @@ lint-pyflakes:
 	$(PYTHON) -mpyflakes $(NAME)
 
 lint-vulture:
-	$(PYTHON) -mvulture $(NAME)
+	$(PYTHON) -mvulture $(NAME) || true
 
 lint-pylint:
 	$(PYTHON) -mpylint -d $(PYLINT_IGNORE) $(NAME) || true
 
 # XXX: doesn't detect modules!
 lint-mypy:
-	$(PYTHON) -mmypy $(NAME)
+	$(PYTHON) -mmypy $(NAME) || true
 
 lint-flake8:
 	$(PYTHON) -mflake8 --ignore=$(FLAKE8_IGNORE) || true

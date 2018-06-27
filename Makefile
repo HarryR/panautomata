@@ -1,5 +1,4 @@
-all:
-	@echo "See README.md"
+all: solidity python
 
 .PHONY: python
 python:
@@ -12,3 +11,7 @@ solidity:
 lint:
 	make -C python lint
 	make -C solidity lint
+
+clean:
+	make -C python clean
+	make -C solidity clean

@@ -191,7 +191,7 @@ contract ExampleSwap
 
         require( swap.state == State.BobAccept );
 
-        // No proof needed
+        // No proof needed, as soon as Bob accepts (and provides proof)
 
         swap.state = State.AliceWithdraw;
 

@@ -49,15 +49,22 @@ int_to_big_endian = packl
 def big_endian_to_int(x): return big_endian_int.deserialize(
     str_to_bytes(x).lstrip(b'\x00'))
 
-zpad = lambda x, l: b'\x00' * max(0, l - len(x)) + x
+
+def zpad(x, l):
+    return b'\x00' * max(0, l - len(x)) + x
 
 
-u256be = lambda v: zpad(int_to_big_endian(v), 32)
+def u256be(v):
+    return zpad(int_to_big_endian(v), 32)
 
-flatten = lambda l: [item for sublist in l for item in sublist]
 
-# Turns a `defaultdict(defaultdict)` into a flat dictionary
-dict_dump = lambda diff: {c: dict(d.items()) for c, d in diff.items()}
+def flatten(l):
+    return [item for sublist in l for item in sublist]
+
+
+def dict_dump(diff):
+    """Turns a `defaultdict(defaultdict)` into a flat dictionary"""
+    return {c: dict(d.items()) for c, d in diff.items()}
 
 
 def is_numeric(x):

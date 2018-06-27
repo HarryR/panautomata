@@ -10,9 +10,11 @@ This is a research project to make it easy for developers to write smart contrac
 ### General
 
  * [ ] Getting started guide
+ * [ ] ExampleSwap FSM diagram
 
 ### Testing
 
+ * [ ] Tests for LithiumLink contract
  * [ ] Tests for Python merkle
  * [ ] Swap example works end-to-end
 

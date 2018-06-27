@@ -82,7 +82,8 @@ contract ExampleSwap
 {
     ProofVerifierInterface internal m_verifier;
 
-    mapping(uint256 => Swap) internal m_swaps;
+    mapping(uint256 => Swap) internal swaps;
+
 
     enum State
     {
@@ -96,6 +97,7 @@ contract ExampleSwap
         BobWithdraw
     }
 
+
     struct Swap
     {
         State state;
@@ -103,10 +105,12 @@ contract ExampleSwap
         ERC20 alice_token;
         address alice_addr;
         uint256 alice_amount;
+        ExampleSwap alice_swap;
 
         ERC20 bob_token;
         address bob_addr;
         uint256 bob_amount;
+        ExampleSwap bob_swap;
     }
 
 
@@ -126,11 +130,13 @@ contract ExampleSwap
         m_verifier = verifier;
     }
 
-
-    function TransitionAlicePropose ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ERC20 bob_token, address bob_addr, uint256 bob_amount )
+    /*
+    * XXX: Need to include address of swap contract for either side
+    */
+    function TransitionAlicePropose ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ERC20 bob_token, address bob_addr, uint256 bob_amount, ExampleSwap bob_swap )
         public returns (bool)
     {
-        Swap storage swap = m_swaps[in_guid];
+        Swap storage swap = swaps[in_guid];
 
         require( swap.state == State.Invalid );
 
@@ -138,6 +144,7 @@ contract ExampleSwap
 
         swap.state = State.AlicePropose;
 
+        swap.alice_swap = this;
         swap.alice_token = alice_token;
         swap.alice_addr = alice_addr;
         swap.alice_amount = alice_amount;
@@ -145,14 +152,20 @@ contract ExampleSwap
         swap.bob_token = bob_token;
         swap.bob_addr = bob_addr;
         swap.bob_amount = bob_amount;
+        swap.bob_swap = bob_swap;
 
+        // TODO: add more fields to OnAlicePropose event
+        // the event must have sufficient information to be provable on other chain
         emit OnAlicePropose( in_guid );
 
         return true;
     }
 
 
-    function TransitionAliceCancel ( uint256 in_guid, bytes proof )
+    /**
+    * On Bobs chain, Alice pre-emptively cancels the swap
+    */
+    function TransitionAliceCancel ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ExampleSwap alice_swap, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
         public
     {
         Swap storage swap = GetSwap(in_guid);
@@ -163,6 +176,16 @@ contract ExampleSwap
         require( m_verifier.Verify( 0x0, proof ) );
 
         swap.state = State.AliceCancel;
+
+        swap.alice_swap = alice_swap;
+        swap.alice_token = alice_token;
+        swap.alice_addr = alice_addr;       // XXX: superfluous
+        swap.alice_amount = alice_amount;   // XXX: superfluous
+
+        swap.bob_swap = this;
+        swap.bob_token = bob_token;
+        swap.bob_addr = bob_addr;
+        swap.bob_amount = bob_amount;
 
         emit OnAliceCancel( in_guid );
     }
@@ -201,7 +224,7 @@ contract ExampleSwap
     }
 
 
-    function TransitionBobAccept ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
+    function TransitionBobAccept ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ExampleSwap alice_swap, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
         public
     {
         Swap storage swap = GetSwap(in_guid);
@@ -213,10 +236,12 @@ contract ExampleSwap
 
         swap.state = State.BobAccept;
 
+        swap.alice_swap = alice_swap;
         swap.alice_token = alice_token;
         swap.alice_addr = alice_addr;       // XXX: superfluous
         swap.alice_amount = alice_amount;   // XXX: superfluous
 
+        swap.bob_swap = this;
         swap.bob_token = bob_token;
         swap.bob_addr = bob_addr;
         swap.bob_amount = bob_amount;
@@ -227,7 +252,7 @@ contract ExampleSwap
     }
 
 
-    function TransitionBobReject ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
+    function TransitionBobReject ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ExampleSwap alice_swap, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
         public
     {
         Swap storage swap = GetSwap(in_guid);
@@ -239,10 +264,12 @@ contract ExampleSwap
 
         swap.state = State.BobReject;
 
+        swap.alice_swap = alice_swap;
         swap.alice_token = alice_token;
         swap.alice_addr = alice_addr;
         swap.alice_amount = alice_amount;
 
+        swap.bob_swap = this;
         swap.bob_token = bob_token;
         swap.bob_addr = bob_addr;
         swap.bob_amount = bob_amount;
@@ -273,7 +300,7 @@ contract ExampleSwap
     function GetSwap( uint256 in_swapid )
         internal view returns (Swap storage out_swap)
     {
-        out_swap = m_swaps[in_swapid];
+        out_swap = swaps[in_swapid];
         require( out_swap.state != State.Invalid );
     }
 

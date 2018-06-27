@@ -60,6 +60,6 @@ lint-mypy:
 	$(PYTHON) -mmypy $(NAME) || true
 
 lint-flake8:
-	$(PYTHON) -mflake8 --ignore=$(FLAKE8_IGNORE) || true
+	$(PYTHON) -mflake8 --ignore=$(FLAKE8_IGNORE) $(NAME) || true
 
 lint: lint-pyflakes lint-vulture lint-pylint lint-flake8

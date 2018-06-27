@@ -1,4 +1,4 @@
-# Panautomata
+# Panautoma 
 
 This is a research project to make it easy for developers to write smart contracts which run across multiple block-chains without the complex underlying logic that makes it possible.
 

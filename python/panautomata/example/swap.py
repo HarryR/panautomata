@@ -1,3 +1,6 @@
+# Copyright (c) 2018 HarryR. All Rights Reserved.
+# SPDX-License-Identifier: LGPL-3.0+
+
 from enum import IntEnum
 
 import click
@@ -18,6 +21,10 @@ class SwapSide(object):
     __slots__ = ('contract', 'token', 'address', 'amount')
 
     def __init__(self, contract, token, address, amount):
+        # TODO: verify type of contract
+        # TODO: verify type of token
+        # TODO: verify type of address
+        assert isinstance(amount, int)
         self.contract = contract  # ExampleSwap contract proxy
         self.token = token        # ERC20 token contract proxy
         self.address = address    # Of account
@@ -28,25 +35,50 @@ class Swap(object):
     __slots__ = ('state', 'alice_side', 'bob_side')
 
     def __init__(self, state, alice_side, bob_side):
+        assert isinstance(state, SwapState)
+        assert isinstance(alice_side, SwapSide)
+        assert isinstance(bob_side, SwapSide)
         self.state = state
         self.alice_side = alice_side
         self.bob_side = bob_side
 
 
 class SwapProposal(object):
+    __slots__ = ('swap', 'proof')
+
+    def __init__(self, swap, proof):
+        self.swap = swap
+        self.proof = proof
+
     def cancel(self):
         # TODO: on bob side, submit cancel transaction (as Alice)
         pass
+
+    def wait(self):
+        # TODO: wait until Bob decides what to do with the swap
+        # Swap been accepted by Bob, Alice can now withdraw
+        return SwapConfirmed(self.swap.alice_side)
 
     def accept(self):
         # TODO: verify allowed balance on bob side
         # TODO: allow balance on Bob side if needed
         # TODO: on bob side, submit accept transaction (as Bob)
-        pass
+        return SwapConfirmed(self.swap.bob_side)
 
     def reject(self):
         # TODO: on bob side, submit reject transaction (as Bob)
         pass
+
+
+class SwapConfirmed(object):
+    __slots__ = ('side',)
+
+    def __init__(self, side):
+        assert isinstance(side, SwapSide)
+        self.side = side
+
+    def withdraw(self):
+        return True
 
 
 class SwapManager(object):
@@ -63,6 +95,7 @@ class SwapManager(object):
         # TODO: verify allowed balance on Alice side
         # TODO: allow balance on Alice side if needed
         # TODO: submit proposal transaction
+        return SwapProposal(swap, proposal)
 
 
 @click.command(help="Alice Propose")

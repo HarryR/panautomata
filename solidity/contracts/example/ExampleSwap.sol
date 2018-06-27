@@ -2,8 +2,12 @@
 // SPDX-License-Identifier: GPL-3.0+
 
 pragma solidity 0.4.24;
+pragma experimental "v0.5.0";
+pragma experimental ABIEncoderV2;
 
 import "../std/ERC20.sol";
+
+import "../Panautoma.sol";
 
 import "../ProofVerifierInterface.sol";
 
@@ -80,7 +84,7 @@ Counterparty Reject
 */
 contract ExampleSwap
 {
-    ProofVerifierInterface internal m_verifier;
+    using RemoteContractLib for Panautoma.RemoteContract;
 
     mapping(uint256 => Swap) internal swaps;
 
@@ -98,19 +102,19 @@ contract ExampleSwap
     }
 
 
+    struct SwapSide {
+        Panautoma.RemoteContract remote;
+        ERC20 token;
+        address addr;
+        uint256 amount;
+    }
+
+
     struct Swap
     {
         State state;
-
-        ERC20 alice_token;
-        address alice_addr;
-        uint256 alice_amount;
-        ExampleSwap alice_swap;
-
-        ERC20 bob_token;
-        address bob_addr;
-        uint256 bob_amount;
-        ExampleSwap bob_swap;
+        SwapSide alice;
+        SwapSide bob;
     }
 
 
@@ -124,35 +128,21 @@ contract ExampleSwap
     event OnBobWithdraw( uint256 guid );
 
 
-    constructor( ProofVerifierInterface verifier )
+    constructor( )
         public
     {
-        m_verifier = verifier;
+        // TODO: put fancy stuff here
     }
 
-    /*
-    * XXX: Need to include address of swap contract for either side
-    */
-    function TransitionAlicePropose ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ERC20 bob_token, address bob_addr, uint256 bob_amount, ExampleSwap bob_swap )
+  
+    function TransitionAlicePropose ( uint256 in_guid, Swap in_swap )
         public returns (bool)
     {
-        Swap storage swap = swaps[in_guid];
+        require( SwapDoesNotExist(in_guid) );
 
-        require( swap.state == State.Invalid );
+        SafeTransfer( in_swap.alice.token, in_swap.alice.addr, address(this), in_swap.alice.amount );
 
-        SafeTransfer( alice_token, alice_addr, address(this), alice_amount );
-
-        swap.state = State.AlicePropose;
-
-        swap.alice_swap = this;
-        swap.alice_token = alice_token;
-        swap.alice_addr = alice_addr;
-        swap.alice_amount = alice_amount;
-
-        swap.bob_token = bob_token;
-        swap.bob_addr = bob_addr;
-        swap.bob_amount = bob_amount;
-        swap.bob_swap = bob_swap;
+        swaps[in_guid] = in_swap;
 
         // TODO: add more fields to OnAlicePropose event
         // the event must have sufficient information to be provable on other chain
@@ -165,27 +155,16 @@ contract ExampleSwap
     /**
     * On Bobs chain, Alice pre-emptively cancels the swap
     */
-    function TransitionAliceCancel ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ExampleSwap alice_swap, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
+    function TransitionAliceCancel ( uint256 in_guid, Swap in_swap, bytes in_proof )
         public
     {
-        Swap storage swap = GetSwap(in_guid);
+        // Swap must not exist on Bobs chain
+        require( SwapDoesNotExist(in_guid) );
 
-        require( swap.state == State.Invalid );
+        swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( m_verifier.Verify( 0x0, proof ) );
-
-        swap.state = State.AliceCancel;
-
-        swap.alice_swap = alice_swap;
-        swap.alice_token = alice_token;
-        swap.alice_addr = alice_addr;       // XXX: superfluous
-        swap.alice_amount = alice_amount;   // XXX: superfluous
-
-        swap.bob_swap = this;
-        swap.bob_token = bob_token;
-        swap.bob_addr = bob_addr;
-        swap.bob_amount = bob_amount;
+        require( in_swap.alice.remote.Verify(0x0, in_proof) );
 
         emit OnAliceCancel( in_guid );
     }
@@ -199,7 +178,7 @@ contract ExampleSwap
         require( swap.state == State.AlicePropose );
 
         // Must provide proof of OnAliceCancel or OnBobReject
-        require( m_verifier.Verify( 0x0, proof ) );
+        require( swap.alice.remote.Verify(0x0, proof) );
 
         swap.state = State.AliceRefund;
 
@@ -218,61 +197,39 @@ contract ExampleSwap
 
         swap.state = State.AliceWithdraw;
 
-        SafeTransfer( swap.bob_token, address(this), swap.bob_addr, swap.bob_amount );
+        SafeTransfer( swap.bob.token, address(this), swap.bob.addr, swap.bob.amount );
 
         emit OnAliceWithdraw( in_guid );
     }
 
 
-    function TransitionBobAccept ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ExampleSwap alice_swap, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
+    function TransitionBobAccept ( uint256 in_guid, Swap in_swap, bytes proof )
         public
     {
-        Swap storage swap = GetSwap(in_guid);
+        // Swap must not already exist on Bobs chain to Accept
+        require( SwapDoesNotExist(in_guid) );
 
-        require( swap.state == State.Invalid );
+        swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( m_verifier.Verify( 0x0, proof ) );
+        require( in_swap.bob.remote.Verify(0x0, proof) );
 
-        swap.state = State.BobAccept;
-
-        swap.alice_swap = alice_swap;
-        swap.alice_token = alice_token;
-        swap.alice_addr = alice_addr;       // XXX: superfluous
-        swap.alice_amount = alice_amount;   // XXX: superfluous
-
-        swap.bob_swap = this;
-        swap.bob_token = bob_token;
-        swap.bob_addr = bob_addr;
-        swap.bob_amount = bob_amount;
-
-        SafeTransfer( bob_token, bob_addr, address(this), bob_amount );
+        SafeTransfer( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
 
         emit OnBobAccept( in_guid );
     }
 
 
-    function TransitionBobReject ( uint256 in_guid, ERC20 alice_token, address alice_addr, uint256 alice_amount, ExampleSwap alice_swap, ERC20 bob_token, address bob_addr, uint256 bob_amount, bytes proof )
+    function TransitionBobReject ( uint256 in_guid, Swap in_swap, bytes proof )
         public
     {
-        Swap storage swap = GetSwap(in_guid);
+        // Swap must not already exist on Bobs chain to Reject
+        require( SwapDoesNotExist(in_guid) );
 
-        require( swap.state == State.Invalid );
+        swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( m_verifier.Verify( 0x0, proof ) );
-
-        swap.state = State.BobReject;
-
-        swap.alice_swap = alice_swap;
-        swap.alice_token = alice_token;
-        swap.alice_addr = alice_addr;
-        swap.alice_amount = alice_amount;
-
-        swap.bob_swap = this;
-        swap.bob_token = bob_token;
-        swap.bob_addr = bob_addr;
-        swap.bob_amount = bob_amount;
+        require( in_swap.bob.remote.Verify(0x0, proof) );
 
         emit OnBobReject( in_guid );
     }
@@ -281,28 +238,44 @@ contract ExampleSwap
     function TransitionBobWithdraw ( uint256 in_guid, bytes proof )
         public
     {
+        // Swap must exist on Bobs chain to Withdraw
         Swap storage swap = GetSwap(in_guid);
 
         require( swap.state == State.AlicePropose );
 
         // Must provide proof of BobAccept
-        require( m_verifier.Verify( 0x0, proof ) );
+        require( swap.bob.remote.Verify( 0x0, proof ) );
 
         swap.state = State.BobWithdraw;
 
         // Transfer the funds Alice deposited to Bob
-        SafeTransfer( swap.alice_token, address(this), swap.bob_addr, swap.alice_amount );
+        SafeTransfer( swap.alice.token, address(this), swap.bob.addr, swap.alice.amount );
 
         emit OnBobWithdraw( in_guid );
     }
 
 
-    function GetSwap( uint256 in_swapid )
+    function SwapDoesNotExist( uint256 in_swap_id )
+        internal view returns (bool)
+    {
+        return SwapStateIs(in_swap_id, State.Invalid);
+    }
+
+
+    function SwapStateIs( uint256 in_swap_id, State state )
+        internal view returns (bool)
+    {
+        return swaps[in_swap_id].state == state;
+    }
+
+
+    function GetSwap( uint256 in_swap_id )
         internal view returns (Swap storage out_swap)
     {
-        out_swap = swaps[in_swapid];
+        out_swap = swaps[in_swap_id];
         require( out_swap.state != State.Invalid );
     }
+
 
     /**
     * Performs a 'safer' ERC20 transferFrom call

@@ -17,9 +17,9 @@ library Panautoma
 
 
 library RemoteContractLib {
-	function Verify( Panautoma.RemoteContract self, bytes32 leaf_hash, bytes proof )
+	function VerifyEvent( Panautoma.RemoteContract self, bytes32 in_event_sig, bytes in_event_args, bytes proof )
 		internal view returns (bool)
 	{
-		return self.prover.Verify(self.nid, self.addr, leaf_hash, proof);
+		return self.prover.Verify(self.nid, self.addr, keccak256(abi.encodePacked(in_event_sig, in_event_args)), proof);
 	}
 } 

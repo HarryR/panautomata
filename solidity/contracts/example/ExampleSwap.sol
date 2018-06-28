@@ -119,19 +119,31 @@ contract ExampleSwap
 
 
     // Events emitted after state transitions
-    event OnAlicePropose( uint256 guid );
+    event OnAlicePropose( uint256 guid, Swap swap );
+    bytes32 constant public SIG_ON_ALICE_PROPOSE = keccak256("OnAlicePropose(uint256)");
+
     event OnAliceWithdraw( uint256 guid );
+    bytes32 constant public SIG_ON_ALICE_WITHDRAW = keccak256("OnAliceWithdraw(uint256)");
+
     event OnAliceRefund( uint256 guid );
+    bytes32 constant public SIG_ON_ALICE_REFUND = keccak256("OnAliceRefund(uint256)");
+
     event OnAliceCancel( uint256 guid );
+    bytes32 constant public SIG_ON_ALICE_CANCEL = keccak256("OnAliceCancel(uint256)");
+
     event OnBobAccept( uint256 guid );
+    bytes32 constant public SIG_ON_BOB_ACCEPT = keccak256("OnBobAccept(uint256)");
+
     event OnBobReject( uint256 guid );
+    bytes32 constant public SIG_ON_BOB_REJECT = keccak256("OnBobReject(uint256)");
+
     event OnBobWithdraw( uint256 guid );
+    bytes32 constant public SIG_ON_BOB_WITHDRAW = keccak256("OnBobWithdraw(uint256)");
 
 
-    constructor( )
-        public
+    constructor () public
     {
-        // TODO: put fancy stuff here
+        // TODO: do stuff here
     }
 
   
@@ -140,13 +152,15 @@ contract ExampleSwap
     {
         require( SwapDoesNotExist(in_guid) );
 
-        SafeTransfer( in_swap.alice.token, in_swap.alice.addr, address(this), in_swap.alice.amount );
-
         swaps[in_guid] = in_swap;
+
+        // Transfer must occur after storing swap to storage
+        // Otherwise Swap will still be in Invalid state...
+        SafeTransfer( in_swap.alice.token, in_swap.alice.addr, address(this), in_swap.alice.amount );
 
         // TODO: add more fields to OnAlicePropose event
         // the event must have sufficient information to be provable on other chain
-        emit OnAlicePropose( in_guid );
+        emit OnAlicePropose( in_guid, in_swap );
 
         return true;
     }
@@ -164,13 +178,13 @@ contract ExampleSwap
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.alice.remote.Verify(0x0, in_proof) );
+        require( in_swap.alice.remote.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
 
         emit OnAliceCancel( in_guid );
     }
 
 
-    function TransitionAliceRefund ( uint256 in_guid, bytes proof )
+    function TransitionAliceRefund ( uint256 in_guid, bytes in_proof )
         public
     {
         Swap storage swap = GetSwap(in_guid);
@@ -178,7 +192,7 @@ contract ExampleSwap
         require( swap.state == State.AlicePropose );
 
         // Must provide proof of OnAliceCancel or OnBobReject
-        require( swap.alice.remote.Verify(0x0, proof) );
+        require( swap.alice.remote.VerifyEvent(SIG_ON_ALICE_CANCEL, abi.encodePacked(in_guid), in_proof) );
 
         swap.state = State.AliceRefund;
 
@@ -203,7 +217,7 @@ contract ExampleSwap
     }
 
 
-    function TransitionBobAccept ( uint256 in_guid, Swap in_swap, bytes proof )
+    function TransitionBobAccept ( uint256 in_guid, Swap in_swap, bytes in_proof )
         public
     {
         // Swap must not already exist on Bobs chain to Accept
@@ -212,7 +226,7 @@ contract ExampleSwap
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.bob.remote.Verify(0x0, proof) );
+        require( in_swap.bob.remote.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
 
         SafeTransfer( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
 
@@ -220,7 +234,7 @@ contract ExampleSwap
     }
 
 
-    function TransitionBobReject ( uint256 in_guid, Swap in_swap, bytes proof )
+    function TransitionBobReject ( uint256 in_guid, Swap in_swap, bytes in_proof )
         public
     {
         // Swap must not already exist on Bobs chain to Reject
@@ -229,22 +243,20 @@ contract ExampleSwap
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.bob.remote.Verify(0x0, proof) );
+        require( in_swap.bob.remote.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
 
         emit OnBobReject( in_guid );
     }
 
 
-    function TransitionBobWithdraw ( uint256 in_guid, bytes proof )
+    function TransitionBobWithdraw ( uint256 in_guid, bytes in_proof )
         public
     {
         // Swap must exist on Bobs chain to Withdraw
-        Swap storage swap = GetSwap(in_guid);
-
-        require( swap.state == State.AlicePropose );
+        Swap storage swap = GetSwapInState(in_guid, State.AlicePropose);
 
         // Must provide proof of BobAccept
-        require( swap.bob.remote.Verify( 0x0, proof ) );
+        require( swap.bob.remote.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encodePacked(in_guid), in_proof ) );
 
         swap.state = State.BobWithdraw;
 
@@ -252,6 +264,29 @@ contract ExampleSwap
         SafeTransfer( swap.alice.token, address(this), swap.bob.addr, swap.alice.amount );
 
         emit OnBobWithdraw( in_guid );
+    }
+
+
+    function EncodeSwap ( Swap in_swap )
+        internal pure returns (bytes)
+    {
+        return abi.encodePacked(
+            address(in_swap.alice.remote.prover),
+            in_swap.alice.remote.nid,
+            in_swap.alice.remote.addr,
+
+            address(in_swap.alice.token),
+            in_swap.alice.addr,
+            in_swap.alice.amount,
+
+            address(in_swap.bob.remote.prover),
+            in_swap.bob.remote.nid,
+            in_swap.bob.remote.addr,
+
+            address(in_swap.bob.token),
+            in_swap.bob.addr,
+            in_swap.bob.amount
+        );
     }
 
 
@@ -274,6 +309,14 @@ contract ExampleSwap
     {
         out_swap = swaps[in_swap_id];
         require( out_swap.state != State.Invalid );
+    }
+
+
+    function GetSwapInState( uint256 in_swap_id, State state )
+        internal view returns (Swap storage out_swap)
+    {
+        out_swap = swaps[in_swap_id];
+        require( out_swap.state == state );
     }
 
 

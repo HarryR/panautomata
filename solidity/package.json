@@ -22,7 +22,7 @@
         "compile": "truffle compile",
         "deploy-a": "truffle deploy --network testrpca",
         "deploy-b": "truffle deploy --network testrpcb",
-        "test": "truffle test",
+        "test": "truffle test --network testrpc_a",
         "coverage": "solidity-coverage",
         "lint": "solhint contracts/**/*.sol"
     }

@@ -37,6 +37,9 @@ Many thanks to [Matthew Di Ferrante](https://github.com/mattdf) and [Robert Sams
 
 ## Related Papers / Resources
 
+ * https://comserv.cs.ut.ee/home/files/mutunda_software_engineering_2017.pdf?study=ATILoputoo&reference=25F43764CDF7F7F21F6F674878A5D1BCA7C872F1
+ * https://github.com/silkchain/TurboBpmn
+ * https://courses.cs.ut.ee/MTAT.03.323/2016_fall/uploads/Main/Sem3.pdf
  * http://rystsov.info/2016/05/01/paxos.html
  * http://ithare.com/chapter-vc-modular-architecture-client-side-on-debugging-distributed-systems-deterministic-logic-and-finite-state-machines/
  * https://www.jamessturtevant.com/posts/Creating-a-Finite-State-Machine-Distributed-Workflow-with-Service-Fabric-Reliable-Actors/

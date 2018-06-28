@@ -140,12 +140,6 @@ contract ExampleSwap
     event OnBobWithdraw( uint256 guid );
     bytes32 constant public SIG_ON_BOB_WITHDRAW = keccak256("OnBobWithdraw(uint256)");
 
-
-    constructor () public
-    {
-        // TODO: do stuff here
-    }
-
   
     function TransitionAlicePropose ( uint256 in_guid, Swap in_swap )
         public returns (bool)

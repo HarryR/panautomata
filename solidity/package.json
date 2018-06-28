@@ -20,9 +20,9 @@
         "testrpc-a": "ganache-cli --port 8545 --gasLimit 0xFFFFFFF --gasPrice 1 --networkId 1234 --deterministic grape crisp enroll avoid satoshi picnic term dice gown grocery situate depart",
         "testrpc-b": "ganache-cli --port 8546 --gasLimit 0xFFFFFFF --gasPrice 1 --networkId 5678 --deterministic grape crisp enroll avoid satoshi picnic term dice gown grocery situate depart",
         "compile": "truffle compile",
-        "deploy-a": "truffle deploy --network testrpca",
-        "deploy-b": "truffle deploy --network testrpcb",
-        "test": "truffle test --network testrpc_a",
+        "deploy-a": "truffle migrate --network testrpc_a --reset",
+        "deploy-b": "truffle migrate --network testrpc_b --reset",
+        "test": "truffle test",
         "coverage": "solidity-coverage",
         "lint": "solhint contracts/**/*.sol"
     }

@@ -13,14 +13,13 @@ This tool was designed to facilitate the information swap between two EVM chains
 
 import time
 import threading
-from os import urandom
 
 import click
 from sha3 import keccak_256
 
 from ..utils import scan_bin, require
 from ..args import arg_bytes20, arg_ethrpc
-from ..merkle import merkle_tree, merkle_hash
+from ..merkle import merkle_tree
 
 from .api import app
 
@@ -28,50 +27,60 @@ from .api import app
 def pack_txn(txn):
     """
     Packs all the information about a transaction into a deterministic fixed-sized array of bytes
-        from || to
+
+        from || to || value || KECCAK256(input)
     """
     fields = [txn['from'], txn['to'], txn['value'], txn['input']]
+    # XXX: some fields have an odd number of zeros, e.g. the 'value' field
     encoded_fields = [scan_bin(x + ('0' * (len(x) % 2))) for x in fields]
     tx_from, tx_to, tx_value, tx_input = encoded_fields
 
-    # XXX: why is only the From and To fields... ?
     return b''.join([
         tx_from,
         tx_to,
         tx_value,
-        tx_input
+        keccak_256(tx_input).digest()
     ])
 
 
 def pack_log(txn, log):
     """
-    Packs a log entry into one or more entries.
-        sender account || token address of opposite chain from sender || ionLock address of opposite chain from sender || value || hash(reference)
+    Packs a log entry emitted from a contract into a fixed sized number of bytes
+
+        contract-address || event-signature || KECCAK256(event-data)
+
+    It's not possible for transactions and events to be confused.
+    Transactions are 128 bytes, logs are 96 bytes
+
+    Indexed parameters are ignored, only the event type and originator contract
+    are included along with a hash of the data.
+
+    Event type is a hash of the event signature, e.g. KECCAK256('MyEvent(address,uint256)')
     """
     return b''.join([
-        scan_bin(txn['from']),
-        scan_bin(txn['to']),
         scan_bin(log['address']),
-        scan_bin(log['topics'][1]),
-        scan_bin(log['topics'][2]),
-        # XXX: why aren't there any extra fields?
+        scan_bin(log['topics'][0]),
+        keccak_256(scan_bin(log['data'])).digest()
     ])
 
 
 class Lithium(object):
     """
-    Lithium process the blocks for the event relat to identify the IonLock transactions which occur
-    on the rpc_from chains, which are then added to the IonLink of the rpc_to chain.
+    Process logs and transactions from the `rpc_from` chain, condensing them into merkle roots
+    then relays them to the LithiumLink contract on the `rpc_to` chain.
     """
     def __init__(self, rpc_from, rpc_to, to_account, link_addr, batch_size):
         assert isinstance(batch_size, int)
-        self.checkpoints = {}
-        self.leaves = []
         self._run_event = threading.Event()
-        self._relay_to = threading.Thread(target=self.lithium_instance)
         self._rpc_from = rpc_from
         self._batch_size = batch_size
         self.contract = rpc_to.proxy("../solidity/build/contracts/LithiumLink.json", link_addr, to_account)
+
+
+    @property
+    def running(self):
+        return self._run_event.is_set()
+    
 
     def process_block(self, block_height):
         """Returns all items within the block"""
@@ -118,29 +127,41 @@ class Lithium(object):
         return items, group_tx_count, group_log_count
 
 
-    def iter_blocks(self, start=1, backlog=0, interval=1):
-        """Iterate through the block numbers"""
-        rpc = self._rpc_from
-        old_head = min(start, max(1, rpc.eth_blockNumber() - backlog))
-        print("Starting block height: ", start)
-        print("Previous block height: ", old_head)
-        blocks = []
-        is_latest = False
+    def get_block_group(self):
+        """
+        Retrieve a list of block numbers which need to be synched to the `to` contract
+        from the `from` network, in the order that they need to be synched.
+        """
+        synched_block = self.contract.LatestBlock()
+        current_block = self._rpc_from.eth_blockNumber()
+        print("Current block:", current_block)
+        print("Synched needed:", synched_block)
 
-        # Infinite loop event listener...
-        while self._run_event.is_set():
-            head = rpc.eth_blockNumber() + 1
-            for i in range(old_head, head):
-                if i == (head - 1):
-                    is_latest = True
-                blocks.append(i)
-                if is_latest or len(blocks) % self._batch_size == 0:
-                    print("Yielded blocks", is_latest, blocks)
-                    yield is_latest, blocks
-                    blocks = []
-                    is_latest = False
-            old_head = head
+        # On-chain `to` contract is synched up to the latest `from` block
+        if synched_block == current_block:
+            return None
+
+        # TODO: simplif expression
+        out_blocks = []
+        for block_no in range(synched_block + 1, current_block + 1):
+            out_blocks.append(block_no)
+            if len(out_blocks) == self._batch_size:
+                break
+
+        print("Returning blocks", out_blocks)
+        return out_blocks
+
+
+    def iter_blocks(self, interval=1):
+        """
+        Iterate through the on-chain block numbers in batches of N starting from `start`
+        in the order that they need to be submitted to the on-chain Link contract.
+        """
+        while self.running:
             try:
+                blocks = self.get_block_group()
+                if blocks:
+                    yield blocks
                 time.sleep(interval)
             except KeyboardInterrupt:
                 raise StopIteration
@@ -156,19 +177,19 @@ class Lithium(object):
         if int(receipt['status'], 16) == 0:
             raise RuntimeError("Error when submitting blocks! Receipt: " + str(receipt))
 
-        # TODO: wait for transaction
         # TODO: if successful, verify the latest root matches the one we submitted
 
 
-    def lithium_instance(self):
-        batch = []
+    def run(self):
+        """ Launches the etheventrelay on a thread"""
+        require(False == self._run_event.is_set(), "Already running")
+        self._run_event.set()
 
-        latest_block = self.contract.LatestBlock()
 
         print("Starting block iterator")
-        print("Latest Block: ", latest_block)
 
-        for is_latest, block_group in self.iter_blocks(latest_block + 1):
+        batch = []
+        for block_group in self.iter_blocks():
             items, group_tx_count, group_log_count = self.process_block_group(block_group)
             print("blocks %d-%d (%d tx, %d events)" % (min(block_group), max(block_group), group_tx_count, group_log_count))
 
@@ -177,8 +198,7 @@ class Lithium(object):
                 batch.append((block_height, root))
 
             # Submit when batch size is reached, or item is latest block
-            print("Check", is_latest, len(batch), self._batch_size)
-            if is_latest or len(batch) >= self._batch_size:
+            if len(batch):
                 self.lithium_submit(batch)
                 batch = []
 
@@ -186,17 +206,10 @@ class Lithium(object):
         if len(batch):
             self.lithium_submit(batch)
 
-    def run(self):
-        """ Launches the etheventrelay on a thread"""
-        require(False == self._run_event.is_set(), "Already running")
-        self._run_event.set()
-        self._relay_to.start()
 
     def stop(self):
-        """ Stops the etheventrelay thread """
-        require(self._run_event.is_set(), "Not running")
+        """Turn off the 'running' event, causing any loop to exit"""
         self._run_event.clear()
-        self._relay_to.join()
 
 
 @click.command(help="Ethereum event merkle tree relay daemon")
@@ -210,12 +223,3 @@ class Lithium(object):
 def daemon(rpc_from, rpc_to, to_account, link, api_host, api_port, batch_size):
     lithium = Lithium(rpc_from, rpc_to, to_account, link, batch_size)
     lithium.run()
-
-    app.lithium = lithium
-
-    try:
-        app.run(host=api_host, port=api_port)
-    except KeyboardInterrupt:
-        pass
-
-    lithium.stop()

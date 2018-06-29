@@ -4,8 +4,14 @@ NPM ?= npm
 GANACHE ?= $(ROOT_DIR)/node_modules/.bin/ganache-cli
 TRUFFLE ?= $(ROOT_DIR)/node_modules/.bin/truffle
 
+ABI_CONTRACTS = ExampleSwap LithiumLink ExampleERC20Token
+ABI_FILES = $(addsuffix .abi,$(addprefix abi/,$(ABI_CONTRACTS)))
+
 
 all: check-prereqs node_modules lint compile test
+
+.PHONY: abi
+abi: $(ABI_FILES)
 
 clean:
 	rm -rf build
@@ -18,6 +24,11 @@ check-prereqs:
 		echo -e "'npm' not found!\nSee README.md - or install it ('nvm' is good, see https://github.com/creationix/nvm/)"; \
 		false; \
 	fi
+
+
+abi/%.abi: build/contracts/%.json
+	$(PYTHON) ./utils/extract-abi.py $< > $@
+
 
 $(TRUFFLE): node_modules
 

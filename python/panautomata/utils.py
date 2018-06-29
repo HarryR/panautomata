@@ -81,6 +81,7 @@ def encode_int(v):
 def scan_bin(v):
     if v[:2] in ('0x', b'0x'):
         return decode_hex(v[2:])
+    print("v is", v)
     return decode_hex(v)
 
 

@@ -9,14 +9,7 @@ import "./Merkle.sol";
 
 contract LithiumLink
 {
-    struct Block
-    {
-        uint256 root;
-        uint256 prev;
-        uint256 time;
-    }
-
-    mapping(uint256 => Block) internal m_blocks;
+    mapping(uint256 => uint256) internal m_blocks;
 
     uint256 public LatestBlock;
 
@@ -38,70 +31,33 @@ contract LithiumLink
         selfdestruct( msg.sender );
     }
 
-    function GetTime( uint256 block_id )
-        public view returns (uint256)
-    {
-        return GetBlock(block_id).time;
-    }
-
-    function GetPrevious( uint256 block_id )
-        public view returns (uint256)
-    {
-        return GetBlock(block_id).prev;
-    }
-
-    function GetRoot( uint256 block_id )
-        public view returns (uint256)
-    {
-        return GetBlock(block_id).root;
-    }
-
-    /**
-    * Supplies a sequence of merkle roots which create a hash-chain
-    *
-    *   hash = H(hash, root)
-    */
-    function Update( uint256[] in_state )
+    function Update( uint256 in_start_height, uint256[] in_state )
         public
     {
-        require( in_state.length > 1 );
+        require( in_state.length > 0 );
 
-        uint256 prev_hash = LatestBlock;
+        // Guard to prevent out-of-order updates
+        require( in_start_height == LatestBlock );
 
         for (uint256 i = 0; i < in_state.length; i++)
         {
-            uint256 block_hash = uint256(keccak256(abi.encodePacked(
-                prev_hash, in_state[i]
-            )));
-
-            Block storage blk = GetBlock(block_hash);
-
-            blk.root = in_state[i];
-
-            // Record state at time of block creation
-            blk.prev = prev_hash;
-            blk.time = block.timestamp;
-
-            prev_hash = block_hash;
+            m_blocks[in_start_height + i] = in_state[i];
         }
 
-        LatestBlock = prev_hash;
+        LatestBlock = in_start_height + in_state.length;
     }
 
-    function Verify( uint256 block_id, uint256 leaf_hash, uint256[] proof )
-        public view
-        returns (bool)
+    function Verify( uint256 block_height, uint256 leaf_hash, uint256[] proof )
+        public view returns (bool)
     {
-        return Merkle.Verify( GetRoot(block_id), leaf_hash, proof );
+        return Merkle.Verify( GetRoot(block_height), leaf_hash, proof );
     }
 
-    function GetBlock( uint256 block_id )
-        internal view returns (Block storage)
+    function GetRoot( uint256 block_height )
+        internal view returns (uint256 out_root)
     {
-        Block storage blk = m_blocks[block_id];
+        out_root = m_blocks[block_height];
 
-        require( blk.root != 0 );
-
-        return blk;
+        require( out_root != 0 );
     }
 }

@@ -10,16 +10,12 @@ module.exports = {
         testrpc_a: {
             host: "localhost",
             port: 8545,
-            network_id: "*", // Match any network id
-            gas: 0xFFFFFFFF,
-            gasprice: 0x01
+            network_id: "*" // Match any network id
         },
         testrpc_b: {
             host: "localhost",
             port: 8546,
-            network_id: "*", // Match any network id
-            gas: 0xFFFFFFFF,
-            gasprice: 0x01
+            network_id: "*" // Match any network id
         }
     },
     solc: {

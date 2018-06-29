@@ -242,7 +242,12 @@ class EthJsonRpc(object):
         elif isinstance(abi, str):
             with open(abi) as jsonfile:
                 abi = json.load(jsonfile)
-        require(isinstance(abi, list))
+
+        # Accept either .abi file, or a .json file which contains abi
+        if isinstance(abi, dict) and 'abi' in abi: 
+            abi = abi['abi']
+        else:
+            require(isinstance(abi, list), "Abi must be list, incorrect format")
 
         proxy = dict()
         for method in abi:

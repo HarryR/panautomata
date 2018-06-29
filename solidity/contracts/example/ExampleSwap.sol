@@ -81,6 +81,23 @@ Counterparty Reject
 
     3. InitiatorRefund (recieves deposit)
 
+---------------------------------------------------------
+
+Notes on reducing gas, storage costs, complexity etc.
+
+It should be possible to remove nearly all storage required, instead of
+emitting an event and then using the event as proof (which duplicates all
+of the parameters passed into the function in both an event and as storage),
+proof of the transaction can be passed (which includes all of the info) to
+anything which needs proof of the OnAlicePromise step.
+
+Then, to remove the necessity of storage completely, only the 'in_guid' 
+needs to be flagged as being unusable (or its state saved) in order for
+further actions on the state machine to be handled properly.
+
+All the other side needs to perform a withdraw is proof of an event
+from the other chain which contains the token address, reciever and 
+amount.
 */
 contract ExampleSwap
 {
@@ -103,7 +120,7 @@ contract ExampleSwap
 
 
     struct SwapSide {
-        Panautoma.RemoteContract remote;
+        Panautoma.RemoteContract swap_contract;
         ERC20 token;
         address addr;
         uint256 amount;
@@ -146,6 +163,8 @@ contract ExampleSwap
     {
         require( SwapDoesNotExist(in_guid) );
 
+        require( in_swap.alice.swap_contract.addr == address(this) );
+
         swaps[in_guid] = in_swap;
 
         // Transfer must occur after storing swap to storage
@@ -169,10 +188,12 @@ contract ExampleSwap
         // Swap must not exist on Bobs chain
         require( SwapDoesNotExist(in_guid) );
 
+        require( in_swap.bob.swap_contract.addr == address(this) );
+
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.alice.remote.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
+        require( in_swap.alice.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
 
         emit OnAliceCancel( in_guid );
     }
@@ -183,10 +204,12 @@ contract ExampleSwap
     {
         Swap storage swap = GetSwap(in_guid);
 
+        require( swap.alice.swap_contract.addr == address(this) );
+
         require( swap.state == State.AlicePropose );
 
         // Must provide proof of OnAliceCancel or OnBobReject
-        require( swap.alice.remote.VerifyEvent(SIG_ON_ALICE_CANCEL, abi.encodePacked(in_guid), in_proof) );
+        require( swap.alice.swap_contract.VerifyEvent(SIG_ON_ALICE_CANCEL, abi.encodePacked(in_guid), in_proof) );
 
         swap.state = State.AliceRefund;
 
@@ -198,6 +221,8 @@ contract ExampleSwap
         public
     {
         Swap storage swap = GetSwap(in_guid);
+
+        require( swap.alice.swap_contract.addr == address(this) );
 
         require( swap.state == State.BobAccept );
 
@@ -217,10 +242,12 @@ contract ExampleSwap
         // Swap must not already exist on Bobs chain to Accept
         require( SwapDoesNotExist(in_guid) );
 
+        require( in_swap.bob.swap_contract.addr == address(this) );
+
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.bob.remote.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
+        require( in_swap.bob.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
 
         SafeTransfer( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
 
@@ -234,10 +261,12 @@ contract ExampleSwap
         // Swap must not already exist on Bobs chain to Reject
         require( SwapDoesNotExist(in_guid) );
 
+        require( in_swap.bob.swap_contract.addr == address(this) );
+
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.bob.remote.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
+        require( in_swap.bob.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
 
         emit OnBobReject( in_guid );
     }
@@ -249,8 +278,10 @@ contract ExampleSwap
         // Swap must exist on Bobs chain to Withdraw
         Swap storage swap = GetSwapInState(in_guid, State.AlicePropose);
 
+        require( swap.bob.swap_contract.addr == address(this) );
+
         // Must provide proof of BobAccept
-        require( swap.bob.remote.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encodePacked(in_guid), in_proof ) );
+        require( swap.bob.swap_contract.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encodePacked(in_guid), in_proof ) );
 
         swap.state = State.BobWithdraw;
 
@@ -265,17 +296,17 @@ contract ExampleSwap
         internal pure returns (bytes)
     {
         return abi.encodePacked(
-            address(in_swap.alice.remote.prover),
-            in_swap.alice.remote.nid,
-            in_swap.alice.remote.addr,
+            address(in_swap.alice.swap_contract.prover),
+            in_swap.alice.swap_contract.nid,
+            in_swap.alice.swap_contract.addr,
 
             address(in_swap.alice.token),
             in_swap.alice.addr,
             in_swap.alice.amount,
 
-            address(in_swap.bob.remote.prover),
-            in_swap.bob.remote.nid,
-            in_swap.bob.remote.addr,
+            address(in_swap.bob.swap_contract.prover),
+            in_swap.bob.swap_contract.nid,
+            in_swap.bob.swap_contract.addr,
 
             address(in_swap.bob.token),
             in_swap.bob.addr,

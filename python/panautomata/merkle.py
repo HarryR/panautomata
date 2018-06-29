@@ -48,6 +48,10 @@ def merkle_tree(items):
     :type items: list
     :return: list, long
     """
+    # An empty tree results in an empty root
+    if not len(items):
+        return [0], 0
+
     tree = [sorted(map(merkle_hash, items))]
     extra = merkle_hash(b"merkle-tree-extra")
     while True:

@@ -1,6 +1,6 @@
-## Copyright (c) 2016-2018 Clearmatics Technologies Ltd
-## Copyright (c) 2018 HarryR. All Rights Reserved.
-## SPDX-License-Identifier: LGPL-3.0+
+# Copyright (c) 2016-2018 Clearmatics Technologies Ltd
+# Copyright (c) 2018 HarryR. All Rights Reserved.
+# SPDX-License-Identifier: LGPL-3.0+
 
 """
 API

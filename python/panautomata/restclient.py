@@ -24,11 +24,8 @@ see... it's nice, and predictable, and Pythonic, and flexible, etc...
 
 __all__ = ('RestClient',)
 
-try:
-    from urllib.parse import quote_plus
-except ImportError:
-    from urllib import quote_plus
 
+from urllib.parse import quote_plus
 import requests
 
 

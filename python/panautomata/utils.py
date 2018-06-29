@@ -1,6 +1,6 @@
-## Copyright (c) 2016-2018 Clearmatics Technologies Ltd
-## Copyright (c) 2018 HarryR.
-## SPDX-License-Identifier: LGPL-3.0+
+# Copyright (c) 2016-2018 Clearmatics Technologies Ltd
+# Copyright (c) 2018 HarryR.
+# SPDX-License-Identifier: LGPL-3.0+
 
 import sys
 import json
@@ -24,14 +24,21 @@ TT256 = 2 ** 256
 
 safe_ord = ord if sys.version_info.major == 2 else lambda x: x if isinstance(x, int) else ord(x)
 
-bytes_to_int = lambda x: reduce(lambda o, b: (o << 8) + safe_ord(b), [0] + list(x))
+
+def bytes_to_int(x):
+    return reduce(lambda o, b: (o << 8) + safe_ord(b), [0] + list(x))
 
 
-bit_clear = lambda n, b: n ^ (1<<b) if n & 1<<b else n
+def bit_clear(n, b):
+    return n ^ (1 << b) if n & (1 << b) else n
 
-bit_set = lambda n, b: n | (1<<b)
 
-bit_test = lambda n, b: 0 != (n & (1<<b))
+def bit_set(n, b):
+    return n | (1 << b)
+
+
+def bit_test(n, b):
+    return 0 != (n & (1 << b))
 
 
 def packl(lnum):
@@ -43,11 +50,12 @@ def packl(lnum):
         s = '0' + s
     return unhexlify(s)
 
+
 int_to_big_endian = packl
 
 
-def big_endian_to_int(x): return big_endian_int.deserialize(
-    str_to_bytes(x).lstrip(b'\x00'))
+def big_endian_to_int(x):
+    return big_endian_int.deserialize(str_to_bytes(x).lstrip(b'\x00'))
 
 
 def zpad(x, l):

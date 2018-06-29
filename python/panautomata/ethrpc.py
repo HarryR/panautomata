@@ -49,8 +49,8 @@ JSON_MEDIA_TYPE = 'application/json'
 
 
 BLOCK_TAG_EARLIEST = 'earliest'
-BLOCK_TAG_LATEST   = 'latest'
-BLOCK_TAG_PENDING  = 'pending'
+BLOCK_TAG_LATEST = 'latest'
+BLOCK_TAG_PENDING = 'pending'
 BLOCK_TAGS = (
     BLOCK_TAG_EARLIEST,
     BLOCK_TAG_LATEST,
@@ -91,6 +91,7 @@ def clean_hex(d):
     numbers
     '''
     return hex(d).rstrip('L')
+
 
 def validate_block(block):
     if isinstance(block, str):
@@ -177,9 +178,9 @@ class EthJsonRpc(object):
         params = params or []
         data = {
             'jsonrpc': '2.0',
-            'method':  method,
-            'params':  params,
-            'id':      _id,
+            'method': method,
+            'params': params,
+            'id': _id,
         }
         scheme = 'http'
         if self.tls:
@@ -187,7 +188,7 @@ class EthJsonRpc(object):
         url = '{}://{}:{}'.format(scheme, self.host, self.port)
         headers = {'Content-Type': JSON_MEDIA_TYPE}
         try:
-            encoded_data = json.dumps(data, cls=CustomJSONEncoder) 
+            encoded_data = json.dumps(data, cls=CustomJSONEncoder)
             r = self.session.post(url, headers=headers, data=encoded_data)
         except RequestsConnectionError:
             raise ConnectionError(url)
@@ -232,8 +233,8 @@ class EthJsonRpc(object):
 
     def proxy(self, abi, address, account=None):
         """
-        Provides a Python proxy object which exposes the contract ABI as 
-        callable methods, allowing for seamless use of contracts from Python... 
+        Provides a Python proxy object which exposes the contract ABI as
+        callable methods, allowing for seamless use of contracts from Python...
         """
         # XXX: specific to Ethereum addresses, 20 octets
         address = normalise_address(address)
@@ -248,7 +249,7 @@ class EthJsonRpc(object):
                 abi = json.load(jsonfile)
 
         # Accept either .abi file, or a .json file which contains abi
-        if isinstance(abi, dict) and 'abi' in abi: 
+        if isinstance(abi, dict) and 'abi' in abi:
             abi = abi['abi']
         else:
             require(isinstance(abi, list), "Abi must be list, incorrect format")
@@ -303,9 +304,9 @@ class EthJsonRpc(object):
         '''
         from_ = from_ or self.eth_coinbase()
         if sig is not None and args is not None:
-             types = sig[sig.find('(') + 1: sig.find(')')].split(',')
-             encoded_params = encode_abi(types, args)
-             code += hexlify(encoded_params)
+            types = sig[sig.find('(') + 1: sig.find(')')].split(',')
+            encoded_params = encode_abi(types, args)
+            code += hexlify(encoded_params)
         return self.eth_sendTransaction(from_address=from_, gas=gas, data=code)
 
     def get_contract_address(self, tx):
@@ -662,7 +663,7 @@ class EthJsonRpc(object):
         return self._call('eth_getTransactionByBlockNumberAndIndex', [block, hex(index)])
 
     def eth_getTransactionReceipt(self, tx_hash):
-        # type: (string) -> dict
+        # type: (str) -> dict
         '''
         https://github.com/ethereum/wiki/wiki/JSON-RPC#eth_gettransactionreceipt
 
@@ -727,9 +728,9 @@ class EthJsonRpc(object):
         '''
         _filter = {
             'fromBlock': from_block,
-            'toBlock':   to_block,
-            'address':   address,
-            'topics':    topics,
+            'toBlock': to_block,
+            'address': address,
+            'topics': topics,
         }
         return self._call('eth_newFilter', [_filter])
 
@@ -858,12 +859,12 @@ class EthJsonRpc(object):
         NEEDS TESTING
         '''
         whisper_object = {
-            'from':     from_,
-            'to':       to,
-            'topics':   topics,
-            'payload':  payload,
+            'from': from_,
+            'to': to,
+            'topics': topics,
+            'payload': payload,
             'priority': hex(priority),
-            'ttl':      hex(ttl),
+            'ttl': hex(ttl),
         }
         return self._call('shh_post', [whisper_object])
 
@@ -906,7 +907,7 @@ class EthJsonRpc(object):
         NEEDS TESTING
         '''
         _filter = {
-            'to':     to,
+            'to': to,
             'topics': topics,
         }
         return self._call('shh_newFilter', [_filter])

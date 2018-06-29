@@ -1,5 +1,5 @@
-## Copyright (c) 2018 HarryR. All Rights Reserved.
-## SPDX-License-Identifier: LGPL-3.0+
+# Copyright (c) 2018 HarryR. All Rights Reserved.
+# SPDX-License-Identifier: LGPL-3.0+
 
 from binascii import hexlify
 
@@ -51,9 +51,10 @@ class BytesConverter(BaseConverter):
     Provides raw bytes to Python
     Marshals between raw bytes and hex encoded
     """
-    BYTES_LEN = None
+    BYTES_LEN = 0
+
     def __init__(self, url_map, *items):
-        assert self.BYTES_LEN is not None
+        assert isinstance(self.BYTES_LEN, int)
         super(BytesConverter, self).__init__(url_map)
         self.regex = '(0x)?[a-fA-F0-9]{' + str(self.BYTES_LEN * 2) + '}'
 

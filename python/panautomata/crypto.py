@@ -1,6 +1,6 @@
-## Copyright (c) 2016-2018 Clearmatics Technologies Ltd
-## Copyright (c) 2018 HarryR
-## SPDX-License-Identifier: LGPL-3.0+
+# Copyright (c) 2016-2018 Clearmatics Technologies Ltd
+# Copyright (c) 2018 HarryR
+# SPDX-License-Identifier: LGPL-3.0+
 
 """
 Crypto: Has a load of useful crypto stuff
@@ -17,11 +17,12 @@ from .utils import Marshalled, u256be, safe_ord
 
 try:
     import coincurve
+    has_coincurve = True
 except ImportError:
     from py_ecc.secp256k1 import ecdsa_raw_recover, ecdsa_raw_sign
     import warnings
     warnings.warn('could not import coincurve', ImportWarning)
-    coincurve = None
+    has_coincurve = False
 
 
 def ascii_chr(x):
@@ -46,7 +47,7 @@ class EcdsaSignature(_EcdsaSignatureStruct, Marshalled):
     def recover(self, rawhash):
         assert isinstance(self, EcdsaSignature)
         v, r, s = self
-        if coincurve and hasattr(coincurve, "PublicKey"):
+        if has_coincurve and hasattr(coincurve, "PublicKey"):
             try:
                 pk = coincurve.PublicKey.from_signature_and_message(
                     ''.join([r, s, ascii_chr(v - 27)]),

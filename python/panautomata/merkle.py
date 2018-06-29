@@ -1,6 +1,6 @@
-## Copyright (c) 2016-2018 Clearmatics Technologies Ltd
-## Copyright (c) 2018 HarryR
-## SPDX-License-Identifier: LGPL-3.0+
+# Copyright (c) 2016-2018 Clearmatics Technologies Ltd
+# Copyright (c) 2018 HarryR
+# SPDX-License-Identifier: LGPL-3.0+
 
 """
 Merkle:
@@ -23,9 +23,12 @@ def serialize(v):
     raise NotImplementedError((v, type(v)))
 
 
-hashs = lambda *x: bytes_to_int(keccak_256(b''.join(map(serialize, x))).digest())
+def hashs(*x):
+    return bytes_to_int(keccak_256(b''.join(map(serialize, x))).digest())
 
-merkle_hash = lambda *x: bit_clear(hashs(*x), 0xFF)
+
+def merkle_hash(*x):
+    return bit_clear(hashs(*x), 0xFF)
 
 
 def merkle_tree(items):
@@ -49,7 +52,7 @@ def merkle_tree(items):
     :return: list, long
     """
     # An empty tree results in an empty root
-    if not len(items):
+    if not items:
         return [0], 0
 
     tree = [sorted(map(merkle_hash, items))]
@@ -96,9 +99,9 @@ def merkle_path(item, tree):
     path = []
     for level in tree[:-1]:
         if (idx % 2) == 0:
-            path.append(bit_set(level[idx+1], 0xFF))
+            path.append(bit_set(level[idx + 1], 0xFF))
         else:
-            path.append(level[idx-1])
+            path.append(level[idx - 1])
         idx = idx // 2
     return path
 
@@ -132,17 +135,15 @@ def main():
             proof = merkle_path(item, tree)
             assert merkle_proof(item, proof, root) is True
 
-    """
-    from binascii import hexlify
-    print('0x' + hexlify(serialize(item)).decode('ascii'), ',',
-          '0x' + hexlify(serialize(root)).decode('ascii'), ',',
-          '[',
-          ', '.join(['0x' + hexlify(serialize(_)).decode('ascii') for _ in proof]),
-          ']')
-    """
+    # from binascii import hexlify
+    # print('0x' + hexlify(serialize(item)).decode('ascii'), ',',
+    #      '0x' + hexlify(serialize(root)).decode('ascii'), ',',
+    #      '[',
+    #      ', '.join(['0x' + hexlify(serialize(_)).decode('ascii') for _ in proof]),
+    #      ']')
 
     # Verify known values, for cross-compatibility with Solidity code
-    assert 1<<255 == 57896044618658097711785492504343953926634992332820282019728792003956564819968
+    assert (1 << 255) == 57896044618658097711785492504343953926634992332820282019728792003956564819968
     assert bit_set(0, 0xFF) == 57896044618658097711785492504343953926634992332820282019728792003956564819968
     assert root == 49402248492186442897517245895401266802260665337500758963574365718367124339789
     assert item == 98

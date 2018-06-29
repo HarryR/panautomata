@@ -5,9 +5,13 @@
 """
 Lithium: Event Relayer between two Ethereum chains
 
-Connects to two RPC endpoints, listens to IonLock events from one chain, packs them, constructs merkle roots and submits them to the IonLink contract of the other chain
+Connects to two RPC endpoints, retrieves transactions and logs from one chain,
+packs them, constructs merkle roots and submits them to the IonLink contract of
+the other chain.
 
-This tool was designed to facilitate the information swap between two EVM chains and only works in one direction. To allow two-way communication, two Lithium instances must be initialised.
+This tool was designed to facilitate the information swap between two EVM chains
+and only works in one direction. To allow two-way communication, two Lithium
+instances must be initialised.
 """
 
 
@@ -21,8 +25,6 @@ from ..utils import scan_bin, require
 from ..args import arg_bytes20, arg_ethrpc
 from ..merkle import merkle_tree
 
-from .api import app
-
 
 def pack_txn(txn):
     """
@@ -31,7 +33,7 @@ def pack_txn(txn):
         from || to || value || KECCAK256(input)
     """
     fields = [txn['from'], txn['to'], txn['value'], txn['input']]
-    # XXX: some fields have an odd number of zeros, e.g. the 'value' field
+    # NOTE: some fields have an odd number of zeros, e.g. the 'value' field
     encoded_fields = [scan_bin(x + ('0' * (len(x) % 2))) for x in fields]
     tx_from, tx_to, tx_value, tx_input = encoded_fields
 
@@ -43,7 +45,7 @@ def pack_txn(txn):
     ])
 
 
-def pack_log(txn, log):
+def pack_log(log):
     """
     Packs a log entry emitted from a contract into a fixed sized number of bytes
 
@@ -74,41 +76,43 @@ class Lithium(object):
         self._run_event = threading.Event()
         self._rpc_from = rpc_from
         self._batch_size = batch_size
+        # XXX: extract ABI from package resources
         self.contract = rpc_to.proxy("../solidity/build/contracts/LithiumLink.json", link_addr, to_account)
-
 
     @property
     def running(self):
         return self._run_event.is_set()
-    
 
     def process_block(self, block_height):
         """Returns all items within the block"""
+        # TODO: return 'ProcessedBlock' object with items, tx_count and log_count members
         rpc = self._rpc_from
         block = rpc.eth_getBlockByNumber(block_height, False)
-        items = []
+        if not block['transactions']:
+            return [], 0, 0
+
         log_count = 0
         tx_count = 0
-        if block['transactions']:
-            for tx_hash in block['transactions']:
-                transaction = rpc.eth_getTransactionByHash(tx_hash)
+        items = []
+        for tx_hash in block['transactions']:
+            transaction = rpc.eth_getTransactionByHash(tx_hash)
 
-                # Exclude transaction creation?
-                if transaction['to'] is None:
-                    continue
+            # Exclude contract creation
+            if transaction['to'] is None:
+                continue
 
-                tx_count += 1
-                items.append(pack_txn(transaction))
+            tx_count += 1
+            items.append(pack_txn(transaction))
 
-                receipt = rpc.eth_getTransactionReceipt(tx_hash)
-                if receipt['logs']:
-                    for log_entry in receipt['logs']:
-                        log_item = pack_log(transaction, log_entry)
-                        items.append(log_item)
-                        log_count += 1
+            # Process logs for transaction
+            receipt = rpc.eth_getTransactionReceipt(tx_hash)
+            if receipt['logs']:
+                for log_entry in receipt['logs']:
+                    log_item = pack_log(log_entry)
+                    items.append(log_item)
+                    log_count += 1
 
         return items, tx_count, log_count
-
 
     def process_block_group(self, block_group):
         """
@@ -126,7 +130,6 @@ class Lithium(object):
 
         return items, group_tx_count, group_log_count
 
-
     def get_block_group(self):
         """
         Retrieve a list of block numbers which need to be synched to the `to` contract
@@ -141,16 +144,14 @@ class Lithium(object):
         if synched_block == current_block:
             return None
 
-        # TODO: simplif expression
+        # TODO: simplify expression
         out_blocks = []
         for block_no in range(synched_block + 1, current_block + 1):
             out_blocks.append(block_no)
             if len(out_blocks) == self._batch_size:
                 break
 
-        print("Returning blocks", out_blocks)
         return out_blocks
-
 
     def iter_blocks(self, interval=1):
         """
@@ -164,8 +165,7 @@ class Lithium(object):
                     yield blocks
                 time.sleep(interval)
             except KeyboardInterrupt:
-                raise StopIteration
-
+                break
 
     def lithium_submit(self, batch):
         """Submit batch of merkle roots to LithiumLink"""
@@ -179,12 +179,10 @@ class Lithium(object):
 
         # TODO: if successful, verify the latest root matches the one we submitted
 
-
     def run(self):
         """ Launches the etheventrelay on a thread"""
-        require(False == self._run_event.is_set(), "Already running")
+        require(False is self._run_event.is_set(), "Already running")
         self._run_event.set()
-
 
         print("Starting block iterator")
 
@@ -194,18 +192,16 @@ class Lithium(object):
             print("blocks %d-%d (%d tx, %d events)" % (min(block_group), max(block_group), group_tx_count, group_log_count))
 
             for block_height, block_items in items:
-                tree, root = merkle_tree(block_items)
+                _, root = merkle_tree(block_items)
                 batch.append((block_height, root))
 
-            # Submit when batch size is reached, or item is latest block
-            if len(batch):
+            if batch:
                 self.lithium_submit(batch)
                 batch = []
 
         # Submit any remaining items
-        if len(batch):
+        if batch:
             self.lithium_submit(batch)
-
 
     def stop(self):
         """Turn off the 'running' event, causing any loop to exit"""
@@ -217,9 +213,7 @@ class Lithium(object):
 @click.option('--rpc-to', callback=arg_ethrpc, metavar="ip:port", default='127.0.0.1:8546', help="Destination Ethereum JSON-RPC server")
 @click.option('--to-account', callback=arg_bytes20, metavar="0x...20", required=True, help="Recipient")
 @click.option('--link', callback=arg_bytes20, metavar="0x...20", required=True, help="IonLink contract address")
-@click.option('--api-host', default='127.0.0.1', metavar='addr', help='IP or host')
-@click.option('--api-port', type=int, required=True, metavar="N", help="API server endpoint")
 @click.option('--batch-size', type=int, default=32, metavar="N", help="Upload at most N items per transaction")
-def daemon(rpc_from, rpc_to, to_account, link, api_host, api_port, batch_size):
+def daemon(rpc_from, rpc_to, to_account, link, batch_size):
     lithium = Lithium(rpc_from, rpc_to, to_account, link, batch_size)
     lithium.run()

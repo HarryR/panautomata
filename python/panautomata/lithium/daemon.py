@@ -14,7 +14,7 @@ and only works in one direction. To allow two-way communication, two Lithium
 instances must be initialised.
 """
 
-
+import os
 import time
 import threading
 
@@ -214,6 +214,11 @@ class Lithium(object):
 @click.option('--to-account', callback=arg_bytes20, metavar="0x...20", required=True, help="Recipient")
 @click.option('--link', callback=arg_bytes20, metavar="0x...20", required=True, help="IonLink contract address")
 @click.option('--batch-size', type=int, default=32, metavar="N", help="Upload at most N items per transaction")
-def daemon(rpc_from, rpc_to, to_account, link, batch_size):
+@click.option('--pid', metavar="file", help="Save pid to file")
+def daemon(rpc_from, rpc_to, to_account, link, batch_size, pid):
+    if pid:
+        with open(pid, 'w') as handle:
+            handle.write(str(os.getpid()))
     lithium = Lithium(rpc_from, rpc_to, to_account, link, batch_size)
     lithium.run()
+    print("Stopped")

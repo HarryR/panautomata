@@ -9,11 +9,10 @@ import "../ProofVerifierInterface.sol";
 
 contract MockProofVerifier is ProofVerifierInterface
 {
-    function Verify( uint64 network_id, address contract_address, bytes32 leaf_hash, bytes proof )
+    function Verify( uint64 network_id, bytes32 leaf_hash, bytes proof )
         external view returns (bool)
     {
         require( network_id > 0 );
-        require( contract_address != address(0x0) );
         require( leaf_hash != 0x0 );
         require( proof.length > 0 );
         return true;

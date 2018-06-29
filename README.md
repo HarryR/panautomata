@@ -20,7 +20,6 @@ This is a research project to make it easy for developers to write smart contrac
 
 ### Toolchain ToDo
 
- * [ ] Signed commits (one key per repo)
  * [ ] Travis CI
  * [ ] Code coverage
  * [ ] Docker image

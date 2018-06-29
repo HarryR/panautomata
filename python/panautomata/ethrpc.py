@@ -125,6 +125,10 @@ class EthTransaction(namedtuple('_TxStruct', ('rpc', 'txid'))):
     def wait(self):
         return self.receipt(wait=True)
 
+    def success(self, wait=True):
+        receipt = self.receipt(wait=wait)
+        return receipt['status'] != '0x0'
+
     def receipt(self, wait=False, tick_fn=None):
         # TODO: add `timeout` param
         first = True

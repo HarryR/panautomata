@@ -37,7 +37,9 @@ def pack_txn(txn):
     # XXX: why is only the From and To fields... ?
     return b''.join([
         tx_from,
-        tx_to
+        tx_to,
+        tx_value,
+        tx_input
     ])
 
 
@@ -122,7 +124,6 @@ class Lithium(object):
         old_head = min(start, max(1, rpc.eth_blockNumber() - backlog))
         print("Starting block height: ", start)
         print("Previous block height: ", old_head)
-        old_head -= old_head % self._batch_size
         blocks = []
         is_latest = False
 
@@ -133,7 +134,8 @@ class Lithium(object):
                 if i == (head - 1):
                     is_latest = True
                 blocks.append(i)
-                if len(blocks) % self._batch_size == 0:
+                if is_latest or len(blocks) % self._batch_size == 0:
+                    print("Yielded blocks", is_latest, blocks)
                     yield is_latest, blocks
                     blocks = []
                     is_latest = False
@@ -149,7 +151,13 @@ class Lithium(object):
         print("Submitting batch of", len(batch), "blocks")
         for block_height, block_root in batch:
             print(" -", block_height, block_root)
-        self.contract.Update(batch[0][0], [_[1] for _ in batch])
+        transaction = self.contract.Update(batch[0][0] - 1, [_[1] for _ in batch])
+        receipt = transaction.wait()
+        if int(receipt['status'], 16) == 0:
+            raise RuntimeError("Error when submitting blocks! Receipt: " + str(receipt))
+
+        # TODO: wait for transaction
+        # TODO: if successful, verify the latest root matches the one we submitted
 
 
     def lithium_instance(self):
@@ -160,7 +168,7 @@ class Lithium(object):
         print("Starting block iterator")
         print("Latest Block: ", latest_block)
 
-        for is_latest, block_group in self.iter_blocks(latest_block):
+        for is_latest, block_group in self.iter_blocks(latest_block + 1):
             items, group_tx_count, group_log_count = self.process_block_group(block_group)
             print("blocks %d-%d (%d tx, %d events)" % (min(block_group), max(block_group), group_tx_count, group_log_count))
 
@@ -168,10 +176,11 @@ class Lithium(object):
                 tree, root = merkle_tree(block_items)
                 batch.append((block_height, root))
 
-                # Submit when batch size is reached, or item is latest block
-                if is_latest or len(batch) >= self._batch_size:
-                    self.lithium_submit(batch)
-                    batch = []
+            # Submit when batch size is reached, or item is latest block
+            print("Check", is_latest, len(batch), self._batch_size)
+            if is_latest or len(batch) >= self._batch_size:
+                self.lithium_submit(batch)
+                batch = []
 
         # Submit any remaining items
         if len(batch):

@@ -1,11 +1,11 @@
 import click
 
-from .lithium.daemon import daemon
+from .lithium.cli import daemon as lithium_daemon
 from .example.swap import COMMANDS as swap_commands
 
 
 COMMANDS = click.Group()
-COMMANDS.add_command(daemon)
+COMMANDS.add_command(lithium_daemon)
 COMMANDS.add_command(swap_commands)
 
 

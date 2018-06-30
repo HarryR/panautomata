@@ -14,15 +14,14 @@ and only works in one direction. To allow two-way communication, two Lithium
 instances must be initialised.
 """
 
-import os
 import time
 import threading
 
-import click
+# TODO: import logging, use logging
+
 from sha3 import keccak_256
 
 from ..utils import scan_bin, require
-from ..args import arg_bytes20, arg_ethrpc
 from ..merkle import merkle_tree
 
 
@@ -144,7 +143,7 @@ class Lithium(object):
         if synched_block == current_block:
             return None
 
-        # TODO: simplify expression
+        # TODO: simplify expression, reduce to single range() expression
         out_blocks = []
         for block_no in range(synched_block + 1, current_block + 1):
             out_blocks.append(block_no)
@@ -167,7 +166,7 @@ class Lithium(object):
             except KeyboardInterrupt:
                 break
 
-    def lithium_submit(self, batch):
+    def submit(self, batch):
         """Submit batch of merkle roots to LithiumLink"""
         print("Submitting batch of", len(batch), "blocks")
         for block_height, block_root in batch:
@@ -177,6 +176,7 @@ class Lithium(object):
         if int(receipt['status'], 16) == 0:
             raise RuntimeError("Error when submitting blocks! Receipt: " + str(receipt))
 
+        # XXX: what happens when gas limit gets hit? (e.g. too many block submitted at once)
         # TODO: if successful, verify the latest root matches the one we submitted
 
     def run(self):
@@ -196,29 +196,13 @@ class Lithium(object):
                 batch.append((block_height, root))
 
             if batch:
-                self.lithium_submit(batch)
+                self.submit(batch)
                 batch = []
 
         # Submit any remaining items
         if batch:
-            self.lithium_submit(batch)
+            self.submit(batch)
 
     def stop(self):
         """Turn off the 'running' event, causing any loop to exit"""
         self._run_event.clear()
-
-
-@click.command(help="Ethereum event merkle tree relay daemon")
-@click.option('--rpc-from', callback=arg_ethrpc, metavar="ip:port", default='127.0.0.1:8545', help="Source Ethereum JSON-RPC server")
-@click.option('--rpc-to', callback=arg_ethrpc, metavar="ip:port", default='127.0.0.1:8546', help="Destination Ethereum JSON-RPC server")
-@click.option('--to-account', callback=arg_bytes20, metavar="0x...20", required=True, help="Recipient")
-@click.option('--link', callback=arg_bytes20, metavar="0x...20", required=True, help="IonLink contract address")
-@click.option('--batch-size', type=int, default=32, metavar="N", help="Upload at most N items per transaction")
-@click.option('--pid', metavar="file", help="Save pid to file")
-def daemon(rpc_from, rpc_to, to_account, link, batch_size, pid):
-    if pid:
-        with open(pid, 'w') as handle:
-            handle.write(str(os.getpid()))
-    lithium = Lithium(rpc_from, rpc_to, to_account, link, batch_size)
-    lithium.run()
-    print("Stopped")

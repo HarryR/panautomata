@@ -30,15 +30,16 @@ library RemoteContractLib
     }
 
 
-    function VerifyTransaction( Panautoma.RemoteContract self, address in_from_addr, uint256 in_value, bytes in_input, bytes proof )
+    function VerifyTransaction( Panautoma.RemoteContract self, address in_from_addr, uint256 in_value, bytes4 in_selector, bytes in_args, bytes proof )
         internal view returns (bool)
     {
         bytes32 leaf_hash = keccak256(abi.encodePacked(
             in_from_addr,
             self.addr,  // destination
             in_value,
-            keccak256(in_input)
+            keccak256(abi.encodePacked(in_selector, in_args))
         ));
+
         return self.prover.Verify(self.nid, leaf_hash, proof);
     }
 } 

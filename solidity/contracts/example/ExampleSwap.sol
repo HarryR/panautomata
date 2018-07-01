@@ -9,8 +9,6 @@ import "../std/ERC20.sol";
 
 import "../Panautoma.sol";
 
-import "../ProofVerifierInterface.sol";
-
 
 /* Logic flows:
 

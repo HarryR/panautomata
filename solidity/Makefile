@@ -1,3 +1,6 @@
+# Copyright (c) 2018 HarryR. All Rights Reserved.
+# SPDX-License-Identifier: GPL-3.0+
+
 ROOT_DIR := $(shell dirname $(realpath $(MAKEFILE_LIST)))
 
 NPM ?= npm

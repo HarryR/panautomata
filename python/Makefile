@@ -1,3 +1,6 @@
+# Copyright (c) 2018 HarryR. All Rights Reserved.
+# SPDX-License-Identifier: GPL-3.0+
+
 PYTHON ?= python3
 NAME = panautomata
 
@@ -10,7 +13,7 @@ FLAKE8_IGNORE ?= E501
 all: lint-pyflakes test bdist
 
 clean:
-	rm -rf build dist *.egg-info .mypy_cache
+	rm -rf build dist *.egg-info .mypy_cache *.pid
 
 
 #######################################################################
@@ -32,7 +35,7 @@ test-daemon-b2a:
 	$(PYTHON) -m$(NAME) daemon --to-account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --link 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .daemon.b2a.pid
 
 test-daemon-%-stop: .daemon.%.pid
-	if [ -f $< ]; then kill -INT `cat $<` && rm -f $<; fi
+	if [ -f $< ]; then kill -INT `cat $<` || true; fi; rm -f $<;
 
 .PHONY: test
 test:

@@ -42,6 +42,7 @@ def pack_log(log):
         keccak_256(scan_bin(log['data'])).digest()
     ])
 
+
 def process_block(rpc, block_height):
     """Returns all items within the block"""
     # TODO: return 'ProcessedBlock' object with items, tx_count and log_count members

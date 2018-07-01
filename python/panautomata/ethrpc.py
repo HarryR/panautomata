@@ -203,8 +203,7 @@ class EthJsonRpc(object):
         except KeyError:
             raise BadResponseError(response)
 
-    def _encode_function(self, signature, param_values):
-
+    def _encode_function(self, signature, param_values, arg_types=None):
         prefix = big_endian_to_int(keccak_256(signature.encode('utf-8')).digest()[:4])
 
         if signature.find('(') == -1:
@@ -213,23 +212,37 @@ class EthJsonRpc(object):
         if signature.find(')') - signature.find('(') == 1:
             return encode_int(prefix)
 
-        types = signature[signature.find('(') + 1: signature.find(')')].split(',')
+        if arg_types is None:
+            types = signature[signature.find('(') + 1:-1]
+        else:
+            types = arg_types
         encoded_params = encode_abi(types, param_values)
         return zpad(encode_int(prefix), 4) + encoded_params
 
-    def _solproxy_bind(self, method, address, account):
-        ins = [_['type'] for _ in method['inputs']]
-        outs = [_['type'] for _ in method['outputs']]
-        sig = method['name'] + '(' + ','.join(ins) + ')'
+    def _make_signature_str(self, node):
+        if node['type'] != 'tuple':
+            return node['type']
+        return '(' + ','.join([self._make_signature_str(_) for _ in node['components']]) + ')'
 
+    def _make_signature_list(self, node):
+        if node['type'] != 'tuple':
+            return node['type']
+        return ','.join([self._make_signature_str(_) for _ in node['components']])
+
+    def _solproxy_bind(self, method, address, account):
+        # XXX: messy, make signature str, vs make signature list... ewww
+        ins_str = [self._make_signature_str(_) for _ in method['inputs']]
+        ins_list = [self._make_signature_list(_) for _ in method['inputs']]
+        outs = [self._make_signature_list(_) for _ in method['outputs']]
+        sig = method['name'] + '(' + ','.join(ins_str) + ')'
         if method['constant']:
             # XXX: document len(outs) and different behaviour...
             if len(outs) > 1:
-                return lambda *args, **kwa: self.call(address, sig, args, outs, **kwa)
-            return lambda *args, **kwa: self.call(address, sig, args, outs, **kwa)[0]
+                return lambda *args, **kwa: self.call(address, sig, args, outs, arg_types=ins_str, **kwa)
+            return lambda *args, **kwa: self.call(address, sig, args, outs, arg_types=ins_str, **kwa)[0]
         if account is None:
             return None
-        return lambda *args, **kwa: self.call_with_transaction(account, address, sig, args, **kwa)
+        return lambda *args, **kwa: self.call_with_transaction(account, address, sig, args, arg_types=ins_str, **kwa)
 
     def proxy(self, abi, address, account=None):
         """
@@ -316,12 +329,12 @@ class EthJsonRpc(object):
         receipt = self.eth_getTransactionReceipt(tx)
         return receipt['contractAddress']
 
-    def call(self, address, sig, args, result_types):
+    def call(self, address, sig, args, result_types, arg_types=None):
         '''
         Call a contract function on the RPC server, without sending a
         transaction (useful for reading data)
         '''
-        data = self._encode_function(sig, args)
+        data = self._encode_function(sig, args, arg_types=arg_types)
         data_hex = hexlify(data)
         response = self.eth_call(to_address=address, data=data_hex)
         # XXX: horrible hack for when RPC returns '0x0'...
@@ -329,14 +342,14 @@ class EthJsonRpc(object):
             response = '0x' + ('0' * 64)
         return decode_abi(result_types, unhexlify(response[2:]))
 
-    def call_with_transaction(self, from_, address, sig, args, gas=None, gas_price=None, value=None):
+    def call_with_transaction(self, from_, address, sig, args, gas=None, gas_price=None, value=None, arg_types=None):
         '''
         Call a contract function by sending a transaction (useful for storing
         data)
         '''
         gas = gas or self.DEFAULT_GAS_PER_TX
         gas_price = gas_price or self.DEFAULT_GAS_PRICE
-        data = self._encode_function(sig, args)
+        data = self._encode_function(sig, args, arg_types=arg_types)
         data_hex = hexlify(data)
         return self.eth_sendTransaction(from_address=from_, to_address=address, data=data_hex, gas=gas,
                                         gas_price=gas_price, value=value)

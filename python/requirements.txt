@@ -1,4 +1,4 @@
-eth-abi
-rlp
+eth-abi>=1.1.0
+rlp<=0.6.0
 click
 requests

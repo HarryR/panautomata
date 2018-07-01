@@ -1,5 +1,5 @@
 # Copyright (c) 2018 HarryR. All Rights Reserved.
-# SPDX-License-Identifier: LGPL-3.0+
+# SPDX-License-Identifier: GPL-3.0+
 
 from enum import IntEnum
 
@@ -95,6 +95,8 @@ class SwapManager(object):
         # TODO: verify allowed balance on Alice side
         # TODO: allow balance on Alice side if needed
         # TODO: submit proposal transaction
+        swap = None
+        proposal = None
         return SwapProposal(swap, proposal)
 
 

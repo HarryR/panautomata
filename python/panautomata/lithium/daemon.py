@@ -22,7 +22,7 @@ import threading
 from ..utils import require
 from ..merkle import merkle_tree
 
-from .common import pack_txn, pack_log, process_block
+from .common import process_block
 
 
 class Lithium(object):

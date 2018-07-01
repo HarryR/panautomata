@@ -40,11 +40,24 @@ contract ExamplePingPongCommon
         uint256 counter;
     }
 
+    struct Test123 {
+        uint256 a;
+        uint256 b;
+    }
+    event OnTest (uint256 a, uint256 b, Test123 thestruct);
+
     mapping( uint256 => Session ) internal m_sessions;
 
     event Ping( uint256 session_guid, uint256 incr );
 
     event Pong( uint256 session_guid, uint256 incr );
+
+
+    function DoTest (Test123 in_struct)
+        public
+    {
+        emit OnTest(in_struct.a, in_struct.b, in_struct);
+    }
 
 
     /**
@@ -75,7 +88,7 @@ contract ExamplePingPongCommon
     function ReceiveStart (uint256 in_guid, Session in_session, bytes in_proof )
         public
     {
-        require( m_sessions[in_guid].counter != 0 );
+        require( m_sessions[in_guid].counter == 0 );
 
         require( in_session.counter == 1 );
 
@@ -118,7 +131,7 @@ contract ExamplePingPongCommon
     * Recieves proof of the `Pong` event
     * Emits a `Ping` event
     */
-    function ReceievePong (uint256 in_guid, bytes in_proof ) public
+    function ReceivePong (uint256 in_guid, bytes in_proof ) public
     {
         Session storage l_session = m_sessions[in_guid];
 

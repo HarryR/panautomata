@@ -5,7 +5,7 @@ from .example.swap import COMMANDS as swap_commands
 
 
 COMMANDS = click.Group()
-COMMANDS.add_command(lithium_daemon)
+COMMANDS.add_command(lithium_daemon, name="lithium")
 COMMANDS.add_command(swap_commands)
 
 

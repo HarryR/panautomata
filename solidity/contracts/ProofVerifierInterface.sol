@@ -8,5 +8,5 @@ interface ProofVerifierInterface
 {
     function Verify( uint64 network_id, bytes32 leaf_hash, bytes proof ) external view returns (bool);
 
-    function Timestamp( bytes proof ) external pure returns (uint256);
+    function Timestamp( bytes proof ) external view returns (uint256);
 }

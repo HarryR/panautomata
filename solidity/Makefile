@@ -7,11 +7,11 @@ NPM ?= npm
 GANACHE ?= $(ROOT_DIR)/node_modules/.bin/ganache-cli
 TRUFFLE ?= $(ROOT_DIR)/node_modules/.bin/truffle
 
-ABI_CONTRACTS = ExampleSwap LithiumLink ExampleERC20Token
+ABI_CONTRACTS = ExampleSwap LithiumLink LithiumProver ExampleERC20Token
 ABI_FILES = $(addsuffix .abi,$(addprefix abi/,$(ABI_CONTRACTS)))
 
 
-all: check-prereqs node_modules lint compile test
+all: check-prereqs node_modules lint compile abi test
 
 .PHONY: abi
 abi: $(ABI_FILES)

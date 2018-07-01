@@ -15,12 +15,15 @@ contract LithiumLink
 
     address public Owner;
 
-    constructor ( uint256 genesis )
+    uint64 public NetworkId;
+
+    constructor ( uint64 in_network_id, uint256 in_genesis )
         public
     {
-        require( genesis >= 0 );
+        require( in_genesis >= 0 );
+        NetworkId = in_network_id;
         Owner = msg.sender;
-        LatestBlock = genesis;
+        LatestBlock = in_genesis;
     }
 
     function Destroy ()

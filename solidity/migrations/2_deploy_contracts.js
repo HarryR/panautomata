@@ -6,8 +6,9 @@ const ExamplePingPongA = artifacts.require("ExamplePingPongA");
 const ExamplePingPongB = artifacts.require("ExamplePingPongB");
 
 module.exports = async (deployer) => {
+//	console.log(JSON.stringify(deployer));
     await deployer.deploy(MockProofVerifier);
-    await deployer.deploy(LithiumLink, 0);
+    await deployer.deploy(LithiumLink, deployer.network_id, 0);
 
     // Deploy examples
     await deployer.deploy(ExampleSwap);

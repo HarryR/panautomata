@@ -40,24 +40,12 @@ contract ExamplePingPongCommon
         uint256 counter;
     }
 
-    struct Test123 {
-        uint256 a;
-        uint256 b;
-    }
-    event OnTest (uint256 a, uint256 b, Test123 thestruct);
 
     mapping( uint256 => Session ) internal m_sessions;
 
     event Ping( uint256 session_guid, uint256 incr );
 
     event Pong( uint256 session_guid, uint256 incr );
-
-
-    function DoTest (Test123 in_struct)
-        public
-    {
-        emit OnTest(in_struct.a, in_struct.b, in_struct);
-    }
 
 
     /**

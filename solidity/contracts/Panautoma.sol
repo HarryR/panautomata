@@ -26,6 +26,7 @@ library RemoteContractLib
             in_event_sig,   // topic
             keccak256(in_event_args)
         ));
+
         return self.prover.Verify(self.nid, leaf_hash, proof);
     }
 

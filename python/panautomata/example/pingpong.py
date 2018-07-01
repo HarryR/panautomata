@@ -43,7 +43,7 @@ def main():
 	receipt = tx.wait()
 	print(receipt)
 
-	for _ in range(0, 3):
+	for _ in range(0, 5):
 		print("Ping")
 		demo_proof = os.urandom(32)
 		tx = alice.ReceivePing(guid, demo_proof)

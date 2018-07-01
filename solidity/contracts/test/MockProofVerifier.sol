@@ -19,7 +19,7 @@ contract MockProofVerifier is ProofVerifierInterface
     }
 
     function Timestamp( bytes proof )
-        external pure returns (uint256)
+        external view returns (uint256)
     {
         require( proof.length > 0 );
         return 0;

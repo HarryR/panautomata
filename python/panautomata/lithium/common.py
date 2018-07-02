@@ -59,19 +59,23 @@ def process_logs(rpc, tx_hash):
     return items, log_count
 
 
+def process_transaction(rpc, tx_hash):
+    transaction = rpc.eth_getTransactionByHash(tx_hash)
+    require(transaction is not None, "Transaction is None")
+    # Exclude contract creation
+    if transaction['to'] is None:
+        return None
+    return pack_txn(transaction)
+
+
 def process_transaction_and_logs(rpc, tx_hash):
     """
     For a given transaction, return the tx and its events/logs as merkle leafs
     """
-    items = list()
-    transaction = rpc.eth_getTransactionByHash(tx_hash)
-    require( transaction is not None, "Transaction is None" )
-
-    # Exclude contract creation
-    if transaction['to'] is None:
+    transaction = process_transaction(rpc, tx_hash)
+    if not transaction:
         return None, 0
-
-    items.append(pack_txn(transaction))
+    items = [transaction]
 
     log_items, log_count = process_logs(rpc, tx_hash)
     items += log_items
@@ -103,23 +107,32 @@ def process_block(rpc, block_height):
 
 def proof_for_event(rpc, tx_hash, log_idx):
     # XXX: super messy, very inefficient
-    transaction = rpc.eth_getTransactionByHash(tx_hash)
-
     tx_items, tx_log_count = process_transaction_and_logs(rpc, tx_hash)
-    require( log_idx < tx_log_count, "Log index beyond log count for transaction" )
+    require(log_idx < tx_log_count, "Log index beyond log count for transaction")
 
-    event_leaf = tx_items[ 1 + log_idx ]
-
+    transaction = rpc.eth_getTransactionByHash(tx_hash)
     tx_block_height = int(transaction['blockNumber'], 16)
-    block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
 
+    block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
     tree, root = merkle_tree(block_items)
 
+    event_leaf = tx_items[1 + log_idx]
     proof = merkle_path(event_leaf, tree)
-    require( merkle_proof(event_leaf, proof, root) is True, "Cannot confirm merkle proof" )
+    require(merkle_proof(event_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
     return proof
 
 
-def proof_for_tx(txid):
-    pass
+def proof_for_tx(rpc, tx_hash):
+    tx_leaf = process_transaction(rpc, tx_hash)
+
+    transaction = rpc.eth_getTransactionByHash(tx_hash)
+    tx_block_height = int(transaction['blockNumber'], 16)
+
+    block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
+    tree, root = merkle_tree(block_items)
+
+    proof = merkle_path(tx_leaf, tree)
+    require(merkle_proof(tx_leaf, proof, root) is True, "Cannot confirm merkle proof")
+
+    return proof

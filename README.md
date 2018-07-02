@@ -48,4 +48,5 @@ Many thanks to [Matthew Di Ferrante](https://github.com/mattdf) and [Robert Sams
  * http://learnyousomeerlang.com/finite-state-machines
  * https://msdn.microsoft.com/en-us/library/aa478972.aspx
  * https://projects.spring.io/spring-statemachine/
+ * https://bloxroute.com/wp-content/uploads/2018/03/bloXroute-whitepaper.pdf
  * TODO: Add more, filter for relevency

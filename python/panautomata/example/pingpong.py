@@ -24,7 +24,9 @@ def main():
     rpc_b = EthJsonRpc('127.0.0.1', 8546)
     bob = rpc_b.proxy('../solidity/build/contracts/ExamplePingPongB.json', CONTRACT_B, ACCOUNT_B)
 
-    session = ((MOCK_PROVER, 1, CONTRACT_A), (MOCK_PROVER, 1, CONTRACT_B), 1)
+    session_side_alice = (MOCK_PROVER, 1, CONTRACT_A)
+    session_side_bob = (MOCK_PROVER, 1, CONTRACT_B)
+    session = (session_side_alice, session_side_bob, 1)
 
     print("Start")
     tx = alice.Start(guid, session)

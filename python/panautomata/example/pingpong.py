@@ -5,6 +5,7 @@ import os
 from random import randint
 
 from ..ethrpc import EthJsonRpc
+from ..lithium.common import proof_for_tx, proof_for_event
 
 MOCK_PROVER = '0x5b1869d9a4c187f2eaa108f3062412ecf0526b24'
 
@@ -30,25 +31,24 @@ def main():
 
     print("Start")
     tx = alice.Start(guid, session)
-    receipt = tx.wait()
-    print(receipt)
+    tx.wait()
+    start_proof = proof_for_tx(rpc_a, tx)
 
     print("ReceiveStart")
-    demo_proof = os.urandom(32)
-    tx = bob.ReceiveStart(guid, session, demo_proof)
-    receipt = tx.wait()
-    print(receipt)
+    tx = bob.ReceiveStart(guid, session, start_proof)
+    tx.wait()
+    ping_proof = proof_for_event(rpc_b, tx, 0)
 
     for _ in range(0, 5):
-        print("Ping")
-        demo_proof = os.urandom(32)
-        tx = alice.ReceivePing(guid, demo_proof)
-        print(tx.wait())
+        print("ReceivePing")
+        tx = alice.ReceivePing(guid, ping_proof)
+        pong_proof = proof_for_event(rpc_a, tx, 0)
+        tx.wait()
 
-        print("Pong")
-        demo_proof = os.urandom(32)
-        tx = bob.ReceivePong(guid, demo_proof)
-        print(tx.wait())
+        print("ReceivePong")
+        tx = bob.ReceivePong(guid, pong_proof)
+        ping_proof = proof_for_event(rpc_b, tx, 0)
+        tx.wait()
 
 
 if __name__ == "__main__":

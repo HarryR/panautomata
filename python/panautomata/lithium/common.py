@@ -5,7 +5,8 @@
 
 from sha3 import keccak_256
 
-from ..utils import scan_bin, require
+from ..ethrpc import EthTransaction
+from ..utils import scan_bin, require, u256be
 from ..merkle import merkle_tree, merkle_path, merkle_proof
 
 
@@ -106,6 +107,9 @@ def process_block(rpc, block_height):
 
 
 def proof_for_event(rpc, tx_hash, log_idx):
+    if isinstance(tx_hash, EthTransaction):
+        tx_hash = tx_hash.txid
+
     # XXX: super messy, very inefficient
     tx_items, tx_log_count = process_transaction_and_logs(rpc, tx_hash)
     require(log_idx < tx_log_count, "Log index beyond log count for transaction")
@@ -120,10 +124,15 @@ def proof_for_event(rpc, tx_hash, log_idx):
     proof = merkle_path(event_leaf, tree)
     require(merkle_proof(event_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
-    return proof
+    # Proof as accepted by LithiumProver instance
+    return u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
 
 
 def proof_for_tx(rpc, tx_hash):
+    if isinstance(tx_hash, EthTransaction):
+        tx_hash = tx_hash.txid
+
+    # XXX: super messy, very inefficient
     tx_leaf = process_transaction(rpc, tx_hash)
 
     transaction = rpc.eth_getTransactionByHash(tx_hash)
@@ -135,4 +144,5 @@ def proof_for_tx(rpc, tx_hash):
     proof = merkle_path(tx_leaf, tree)
     require(merkle_proof(tx_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
-    return proof
+    # Proof as accepted by LithiumProver instance
+    return u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])

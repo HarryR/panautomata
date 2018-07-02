@@ -16,43 +16,38 @@ CONTRACT_B = '0x9561c133dd8580860b6b7e504bc5aa500f0f06a7'
 
 
 def main():
+    guid = randint(1, 1 << 255)
 
-	guid = randint(1, 1<<255)
+    rpc_a = EthJsonRpc('127.0.0.1', 8545)
+    alice = rpc_a.proxy('../solidity/build/contracts/ExamplePingPongA.json', CONTRACT_A, ACCOUNT_A)
 
-	rpc_a = EthJsonRpc('127.0.0.1', 8545)
-	alice = rpc_a.proxy('../solidity/build/contracts/ExamplePingPongA.json', CONTRACT_A, ACCOUNT_A)
+    rpc_b = EthJsonRpc('127.0.0.1', 8546)
+    bob = rpc_b.proxy('../solidity/build/contracts/ExamplePingPongB.json', CONTRACT_B, ACCOUNT_B)
 
-	rpc_b = EthJsonRpc('127.0.0.1', 8546)
-	bob = rpc_b.proxy('../solidity/build/contracts/ExamplePingPongB.json', CONTRACT_B, ACCOUNT_B)
+    session = ((MOCK_PROVER, 1, CONTRACT_A), (MOCK_PROVER, 1, CONTRACT_B), 1)
 
-	print("Test")
-	tx = alice.DoTest((12345, 3284324782347))
-	receipt = tx.wait()
-	print(receipt)
+    print("Start")
+    tx = alice.Start(guid, session)
+    receipt = tx.wait()
+    print(receipt)
 
-	session = ((MOCK_PROVER,1,CONTRACT_A),(MOCK_PROVER,1,CONTRACT_B),1)
+    print("ReceiveStart")
+    demo_proof = os.urandom(32)
+    tx = bob.ReceiveStart(guid, session, demo_proof)
+    receipt = tx.wait()
+    print(receipt)
 
-	print("Start")
-	tx = alice.Start(guid, session)
-	receipt = tx.wait()
-	print(receipt)
+    for _ in range(0, 5):
+        print("Ping")
+        demo_proof = os.urandom(32)
+        tx = alice.ReceivePing(guid, demo_proof)
+        print(tx.wait())
 
-	print("ReceiveStart")
-	demo_proof = os.urandom(32)
-	tx = bob.ReceiveStart(guid, session, demo_proof)
-	receipt = tx.wait()
-	print(receipt)
+        print("Pong")
+        demo_proof = os.urandom(32)
+        tx = bob.ReceivePong(guid, demo_proof)
+        print(tx.wait())
 
-	for _ in range(0, 5):
-		print("Ping")
-		demo_proof = os.urandom(32)
-		tx = alice.ReceivePing(guid, demo_proof)
-		print(tx.wait())
-
-		print("Pong")
-		demo_proof = os.urandom(32)
-		tx = bob.ReceivePong(guid, demo_proof)
-		print(tx.wait())
 
 if __name__ == "__main__":
-	main()
+    main()

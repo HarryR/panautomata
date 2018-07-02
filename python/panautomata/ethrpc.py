@@ -232,7 +232,6 @@ class EthJsonRpc(object):
     def _solproxy_bind(self, method, address, account):
         # XXX: messy, make signature str, vs make signature list... ewww
         ins_str = [self._make_signature_str(_) for _ in method['inputs']]
-        ins_list = [self._make_signature_list(_) for _ in method['inputs']]
         outs = [self._make_signature_list(_) for _ in method['outputs']]
         sig = method['name'] + '(' + ','.join(ins_str) + ')'
         if method['constant']:

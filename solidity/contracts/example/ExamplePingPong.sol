@@ -84,7 +84,7 @@ contract ExamplePingPongCommon
         // TODO: verify in_session.bob.nid
         require( in_session.bob.addr == address(this) );
 
-        require( true == in_session.alice.VerifyTransaction(msg.sender, 0, this.Start.selector, abi.encode(in_session), in_proof) );
+        require( true == in_session.alice.VerifyTransaction(msg.sender, 0, bytes4(this.Start.selector), abi.encode(in_guid, in_session), in_proof) );
 
         in_session.counter += 1;
 

@@ -204,20 +204,21 @@ class EthJsonRpc(object):
             raise BadResponseError(response)
 
     def _encode_function(self, signature, param_values, arg_types=None):
-        prefix = big_endian_to_int(keccak_256(signature.encode('utf-8')).digest()[:4])
+        prefix = keccak_256(signature.encode('utf-8')).digest()[:4]
+        assert len(prefix) == 4
 
         if signature.find('(') == -1:
             raise RuntimeError('Invalid function signature. Missing "(" and/or ")"...')
 
         if signature.find(')') - signature.find('(') == 1:
-            return encode_int(prefix)
+            return prefix
 
         if arg_types is None:
             types = signature[signature.find('(') + 1:-1]
         else:
             types = arg_types
         encoded_params = encode_abi(types, param_values)
-        return zpad(encode_int(prefix), 4) + encoded_params
+        return prefix + encoded_params
 
     def _make_signature_str(self, node):
         if node['type'] != 'tuple':

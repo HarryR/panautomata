@@ -12,6 +12,18 @@ import "./LithiumLink.sol";
 
 library LithiumProofObj
 {
+    function bytesToUint256 (bytes b, uint offset)
+        private view returns (uint256)
+    {
+        uint256[1] memory out;
+        assembly {
+            let baddr := add(add(b, 32), offset)
+            let ret := staticcall(3000, 4, baddr, 32, out, 32)
+        }
+        return out[0];
+    }
+    /*
+    // Old slower function
     function bytesToUint256(bytes b, uint offset)
         private pure returns (uint256)
     {
@@ -25,7 +37,7 @@ library LithiumProofObj
 
         return uint256(out);
     }
-
+    */
 
     function ExtractFromBytes ( LithiumProver.Proof memory self, bytes memory in_proof )
         internal pure
@@ -39,7 +51,7 @@ library LithiumProofObj
         require( in_proof.length > 32 );
         require( in_proof.length % 32 == 0 );
 
-        self.block_id = bytesToUint256(in_proof, 0); // uint256(in_proof[0]);
+        self.block_id = bytesToUint256(in_proof, 0);
 
         self.path = new uint256[]( (in_proof.length - 32) / 32 );
 

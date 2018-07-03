@@ -70,7 +70,7 @@ def process_transaction(rpc, tx_hash):
     transaction = rpc.eth_getTransactionByHash(tx_hash)
     require(transaction is not None, "Transaction is None")
     # Exclude contract creation
-    if transaction['to'] is None:
+    if transaction['to'] is None or transaction['to'] == '0x0':
         return None
     return pack_txn(transaction)
 

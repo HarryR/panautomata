@@ -17,7 +17,7 @@ contract LithiumLink
 
     uint64 public NetworkId;
 
-    constructor ( uint64 in_network_id, uint256 in_genesis )
+    function LithiumLink ( uint64 in_network_id, uint256 in_genesis )
         public
     {
         require( in_genesis >= 0 );

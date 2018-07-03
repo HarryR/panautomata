@@ -16,17 +16,20 @@ def pack_txn(txn):
 
         from || to || value || KECCAK256(input)
     """
-    fields = [txn['from'], txn['to'], txn['value'], txn['input']]
-    # NOTE: some fields have an odd number of zeros, e.g. the 'value' field
-    encoded_fields = [scan_bin(x + ('0' * (len(x) % 2))) for x in fields]
-    tx_from, tx_to, tx_value, tx_input = encoded_fields
+    tx_from = scan_bin(txn['from'])
+    tx_to = scan_bin(txn['to'])
+    tx_value = int(txn['value'], 16)
+    tx_input = scan_bin(txn['input'])
 
-    return b''.join([
+    # 104 bytes
+    result = b''.join([
         tx_from,
         tx_to,
-        tx_value,
+        u256be(tx_value),
         keccak_256(tx_input).digest()
     ])
+    assert len(result) == 104
+    return result
 
 
 def pack_log(log):
@@ -36,18 +39,21 @@ def pack_log(log):
         contract-address || event-signature || KECCAK256(event-data)
 
     It's not possible for transactions and events to be confused.
-    Transactions are 128 bytes, logs are 96 bytes
+    Transactions are 104 bytes, logs are 84 bytes
 
     Indexed parameters are ignored, only the event type and originator contract
     are included along with a hash of the data.
 
     Event type is a hash of the event signature, e.g. KECCAK256('MyEvent(address,uint256)')
     """
-    return b''.join([
+    # 84 bytes
+    result = b''.join([
         scan_bin(log['address']),
         scan_bin(log['topics'][0]),
         keccak_256(scan_bin(log['data'])).digest()
     ])
+    assert len(result) == 84
+    return result
 
 
 def process_logs(rpc, tx_hash):
@@ -120,6 +126,8 @@ def proof_for_event(rpc, tx_hash, log_idx):
     block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
     tree, root = merkle_tree(block_items)
 
+    # TODO: verify the merkle root matches the on-chain merkle root submitted to LithiumLink
+
     event_leaf = tx_items[1 + log_idx]
     proof = merkle_path(event_leaf, tree)
     require(merkle_proof(event_leaf, proof, root) is True, "Cannot confirm merkle proof")
@@ -141,8 +149,10 @@ def proof_for_tx(rpc, tx_hash):
     block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
     tree, root = merkle_tree(block_items)
 
+    # TODO: verify the merkle root matches the on-chain merkle root submitted to LithiumLink
+
     proof = merkle_path(tx_leaf, tree)
     require(merkle_proof(tx_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
     # Proof as accepted by LithiumProver instance
-    return u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
+    return tx_leaf, root, u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])

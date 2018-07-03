@@ -30,10 +30,10 @@ bdist:
 #
 
 lithium-a2b:
-	$(PYTHON) -m$(NAME) lithium --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8545 --rpc-to 127.0.0.1:8546 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.a2b.pid
+	$(PYTHON) -m$(NAME) lithium --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8545 --rpc-to 127.0.0.1:8546 --contract 0xc89ce4735882c9f0f0fe26686c53074e09b0d550 --pid .lithium.a2b.pid
 
 lithium-b2a:
-	$(PYTHON) -m$(NAME) lithium --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.b2a.pid
+	$(PYTHON) -m$(NAME) lithium --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --contract 0xc89ce4735882c9f0f0fe26686c53074e09b0d550 --pid .lithium.b2a.pid
 
 lithium-%-stop: .lithium.%.pid
 	if [ -f $< ]; then kill -INT `cat $<` || true; fi; rm -f $<;

@@ -7,9 +7,9 @@
     "author": "panautomata@midnight-labs.org",
     "license": "GPL-3.0+",
     "dependencies": {
+        "openzeppelin-solidity": "^1.10.0",
         "solc": "^0.4.24",
-        "truffle": "^4.1.13",
-        "openzeppelin-solidity": "^1.10.0"
+        "truffle": "^4.1.13"
     },
     "devDependencies": {
         "ganache-cli": "^6.1.3",

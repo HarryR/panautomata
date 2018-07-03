@@ -3,7 +3,7 @@
 
 pragma solidity 0.4.24;
 pragma experimental ABIEncoderV2;
-pragma experimental "v0.5.0";
+//pragma experimental "v0.5.0";
 
 import "./ProofVerifierInterface.sol";
 import "./Merkle.sol";
@@ -65,7 +65,7 @@ contract LithiumProver
     LithiumLink m_link;
 
 
-    constructor ( LithiumLink in_link )
+    function LithiumProver ( LithiumLink in_link )
         public
     {
         m_link = in_link;

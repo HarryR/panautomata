@@ -5,8 +5,9 @@ const LithiumProver = artifacts.require("LithiumProver");
 const ExampleERC20Token = artifacts.require("ExampleERC20Token");
 const ExamplePingPongA = artifacts.require("ExamplePingPongA");
 const ExamplePingPongB = artifacts.require("ExamplePingPongB");
+const Registrar = artifacts.require("Registrar");
 
-module.exports = async (deployer) => {
+module.exports = async (deployer, network, accounts) => {
     await deployer.deploy(MockProofVerifier);
     let link = await deployer.deploy(LithiumLink, deployer.network_id, 0);
 
@@ -17,4 +18,6 @@ module.exports = async (deployer) => {
     await deployer.deploy(ExamplePingPongB);
 
     await deployer.deploy(LithiumProver, link.address);
+
+    await deployer.deploy(Registrar, accounts[0]);
 };

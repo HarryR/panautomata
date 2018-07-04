@@ -22,22 +22,7 @@ library LithiumProofObj
         }
         return out[0];
     }
-    /*
-    // Old slower function
-    function bytesToUint256(bytes b, uint offset)
-        private pure returns (uint256)
-    {
-        bytes32 out;
 
-        // XXX: replace with
-        // staticcall(3000, 4, add(b, add(offset, 32)), 32, out, 32)
-        for (uint i = 0; i < 32; i++) {
-            out |= bytes32(b[offset + i] & 0xFF) >> (i * 8);
-        }
-
-        return uint256(out);
-    }
-    */
 
     function ExtractFromBytes ( LithiumProver.Proof memory self, bytes memory in_proof )
         internal view
@@ -48,8 +33,8 @@ library LithiumProofObj
 
         // Encoded as uint256, then array of uint256 path elements
         // No length specifier is needed, as that's deducible from total length
-        require( in_proof.length > 32 );
-        require( in_proof.length % 32 == 0 );
+        require( in_proof.length > 32, "Proof too short" );
+        require( in_proof.length % 32 == 0, "Proof invalid length (mod 32)" );
 
         self.block_id = bytesToUint256(in_proof, 0);
 
@@ -77,7 +62,7 @@ contract LithiumProver
     LithiumLink m_link;
 
 
-    function LithiumProver ( LithiumLink in_link )
+    constructor ( LithiumLink in_link )
         public
     {
         m_link = in_link;
@@ -87,9 +72,9 @@ contract LithiumProver
     function Verify( uint64 in_network_id, bytes32 in_leaf_hash, bytes in_proof_bytes )
         external view returns (bool)
     {
-        require( in_network_id == m_link.NetworkId() );
+        //require( in_network_id == m_link.GetNetworkId(), "Invalid network id" );
 
-        require( in_leaf_hash != 0x0 );
+        require( in_leaf_hash != 0x0, "Invalid leaf hash" );
 
         Proof memory l_proof;
 

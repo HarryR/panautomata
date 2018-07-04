@@ -6,7 +6,6 @@
 Merkle:
 Provides an interface to produce merkle trees, proofs, etc.
 """
-from __future__ import print_function
 
 from .crypto import keccak_256
 from .utils import zpad, int_to_big_endian, bit_clear, bit_test, bit_set, bytes_to_int
@@ -117,6 +116,8 @@ def merkle_proof(leaf, path, root):
     """
     node = merkle_hash(leaf)
     for item in path:
+        if isinstance(item, bytes):
+            item = bytes_to_int(item)
         if bit_test(item, 0xFF):
             node = merkle_hash(node, bit_clear(item, 0xFF))
         else:

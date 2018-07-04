@@ -16,8 +16,11 @@ all: check-prereqs node_modules lint compile abi test
 .PHONY: abi
 abi: $(ABI_FILES)
 
-clean:
-	rm -rf build coverageEnv scTopics coverage coverage.json
+clean: clean-coverage
+	rm -rf build
+
+clean-coverage:
+	rm -rf coverageEnv scTopics coverage coverage.json
 
 dist-clean:
 	rm -rf node_modules
@@ -73,5 +76,6 @@ compile: $(TRUFFLE)
 console: $(TRUFFLE)
 	$(TRUFFLE) console
 
-coverage:
+.PHONY: coverage
+coverage: clean-coverage
 	$(NPM) run coverage

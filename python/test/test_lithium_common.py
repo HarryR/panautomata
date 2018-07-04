@@ -1,0 +1,14 @@
+import unittest
+
+from binascii import unhexlify
+
+from panautomata.utils import bytes_to_int
+from panautomata.lithium.common import verify_proof
+
+
+class TestLithiumCommon(unittest.TestCase):
+	def test_proof(self):
+		root = 36309678569118526148872637980630051425706212671800593816880788491663080654976
+		leaf = unhexlify(b'90f8bf6a479f320ead074411a4b0e7944ea8c9c1d833215cbcc3f914bd1c9ece3ee7bf8b14f841bb0000000000000000000000000000000000000000000000000000000000000000eda0650b624856b39dcb6a3319d210ce4aed935b7bed35ed098ec46b96596cf4')
+		proof = unhexlify(b'000000000000000000000000000000000000000000000000000000000000001ee6843bf393570479a2656a819bf8d219c1dde89fe0b6f73c6299bf202fe755d1')
+		self.assertEqual(verify_proof(root, leaf, proof), True)

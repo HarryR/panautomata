@@ -2,12 +2,13 @@
 # Copyright (c) 2018 HarryR. All Rights Reserved.
 # SPDX-License-Identifier: LGPL-3.0+
 
+import time
 
 from sha3 import keccak_256
 
 from ..ethrpc import EthTransaction
-from ..utils import scan_bin, require, u256be
-from ..merkle import merkle_tree, merkle_path, merkle_proof
+from ..utils import scan_bin, require, u256be, bytes_to_int
+from ..merkle import merkle_tree, merkle_path, merkle_proof, merkle_hash
 
 
 def pack_txn(txn):
@@ -156,3 +157,31 @@ def proof_for_tx(rpc, tx_hash):
 
     # Proof as accepted by LithiumProver instance
     return tx_leaf, root, u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
+
+
+def verify_proof(root, leaf, proof):
+    require(len(proof) % 32 == 0)
+    require(len(proof) >= 64)
+    block_height = proof[:32]
+    proof = proof[32:]
+    path = []
+    while len(proof):
+        path.append( bytes_to_int(proof[:32]) )
+        proof = proof[32:]
+
+    return merkle_proof(leaf, path, root)
+
+
+def link_wait(link_contract, proof):
+    """
+    Wait for the LithiumLink contract to reach the height required
+    to validate the proof.
+    """
+    block_height = bytes_to_int(proof[:32])
+    print("waiting for block height", block_height)
+    while True:
+        latest_block = link_contract.GetHeight()
+        if latest_block >= block_height:
+            break
+        print(".", latest_block)
+        time.sleep(1)

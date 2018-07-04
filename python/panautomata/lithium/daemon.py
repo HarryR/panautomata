@@ -19,7 +19,7 @@ import threading
 
 # TODO: import logging, use logging
 
-from ..utils import require
+from ..utils import require, bytes_to_int
 from ..merkle import merkle_tree
 
 from .common import process_block
@@ -63,7 +63,7 @@ class Lithium(object):
         Retrieve a list of block numbers which need to be synched to the `to` contract
         from the `from` network, in the order that they need to be synched.
         """
-        synched_block = self.contract.LatestBlock()
+        synched_block = self.contract.GetHeight()
         current_block = self._rpc_from.eth_blockNumber()
         print("Current block:", current_block)
         print("Synched needed:", synched_block)

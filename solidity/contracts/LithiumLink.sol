@@ -5,50 +5,59 @@
 pragma solidity 0.4.24;
 
 import "./Merkle.sol";
+import "./LithiumLinkInterface.sol";
 
 
-contract LithiumLink
+contract LithiumLink is LithiumLinkInterface
 {
-    mapping(uint256 => uint256) internal m_blocks;
+    mapping(uint256 => uint256) internal m_roots;
 
-    uint256 public LatestBlock;
+    uint256 internal m_height;
 
-    address public Owner;
+    uint64 internal m_network_id;
 
-    uint64 public NetworkId;
 
-    function LithiumLink ( uint64 in_network_id, uint256 in_genesis )
+    constructor ( uint64 in_network_id, uint256 in_height )
         public
     {
-        require( in_genesis >= 0 );
-        NetworkId = in_network_id;
-        Owner = msg.sender;
-        LatestBlock = in_genesis;
+        require( in_height >= 0 );
+
+        m_height = in_height;
+
+        m_network_id = in_network_id;
     }
 
-    function Destroy ()
-        public
+
+    function GetNetworkId () public view returns (uint64)
     {
-        require( msg.sender == Owner );
-
-        selfdestruct( msg.sender );
+        return m_network_id;
     }
+
+
+    function GetHeight () public view returns (uint256)
+    {
+        return m_height;
+    }
+
 
     function Update( uint256 in_start_height, uint256[] in_state )
         public
     {
         require( in_state.length > 0 );
 
+        // TODO: verify owner matches
+
         // Guard to prevent out-of-order updates
-        require( in_start_height == LatestBlock );
+        require( in_start_height == m_height );
 
         for (uint256 i = 0; i < in_state.length; i++)
         {
-            m_blocks[in_start_height + i] = in_state[i];
+            m_roots[in_start_height + 1 + i] = in_state[i];
         }
 
-        LatestBlock = in_start_height + in_state.length;
+        m_height = in_start_height + in_state.length;
     }
+
 
     function Verify( uint256 block_height, uint256 leaf_hash, uint256[] proof )
         public view returns (bool)
@@ -56,10 +65,11 @@ contract LithiumLink
         return Merkle.Verify( GetRoot(block_height), leaf_hash, proof );
     }
 
-    function GetRoot( uint256 block_height )
-        internal view returns (uint256 out_root)
+
+    function GetRoot( uint256 in_height )
+        public view returns (uint256 out_root)
     {
-        out_root = m_blocks[block_height];
+        out_root = m_roots[in_height];
 
         require( out_root != 0 );
     }

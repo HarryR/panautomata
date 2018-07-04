@@ -3,7 +3,9 @@ module.exports = {
         coverage: {
             host: "localhost",
             port: 8555,
-            network_id: "*"
+            network_id: "*",
+            gas: 0xFFFFFFFF,
+            gasPrice: 0x1
         },
         testrpc_a: {
             host: "localhost",

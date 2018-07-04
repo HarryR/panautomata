@@ -2,6 +2,10 @@
 
 This is a research project to make it easy for developers to write smart contracts which run across multiple block-chains without the complex underlying logic that makes it possible.
 
+Think of this as being a cross-chain oracle for events and transactions, or it could potentially be used as a way of integrating legacy systems with the block-chain.
+
+**If you have interesting use cases, or would like to see integration with interesting things, please add a ticket**
+
 **WARNING: this is a work-in progress, use at your own risk**
 
 
@@ -16,13 +20,16 @@ This is a research project to make it easy for developers to write smart contrac
 ### Testing
 
  * [ ] Tests for LithiumLink contract
+ * [x] PingPong example works end-to-end
  * [ ] Swap example works end-to-end
 
 ### Toolchain ToDo
 
  * [ ] Travis CI
- * [ ] Code coverage
+ * [ ] Python coverage
+ * [x] Solidity code coverage
  * [ ] Docker image
+ * [ ] Docker image upload from Travis
 
 
 ## Licensing
@@ -33,6 +40,7 @@ The project as a whole is GPL-3.0, but individual files may be licensed under th
 ## Appreciation
 
 Many thanks to [Matthew Di Ferrante](https://github.com/mattdf) and [Robert Sams](https://twitter.com/codedlogic) for providing inspiration and insight, and [Clearmatics Ltd.](https://www.clearmatics.com/) for spending money on interesting things.
+
 
 ## Related Papers / Resources
 
@@ -50,3 +58,10 @@ Many thanks to [Matthew Di Ferrante](https://github.com/mattdf) and [Robert Sams
  * https://projects.spring.io/spring-statemachine/
  * https://bloxroute.com/wp-content/uploads/2018/03/bloXroute-whitepaper.pdf
  * TODO: Add more, filter for relevency
+
+
+## Related Projects
+
+ * Terra-Bridge - https://medium.com/contractland/introducing-terra-bridge-cross-chain-value-transfers-d857cbb1ee71
+ * Cosmos - https://cosmos.network/
+ * Polkadot - https://polkadot.network/

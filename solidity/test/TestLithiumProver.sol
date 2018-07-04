@@ -29,4 +29,33 @@ contract TestLithiumProver
 
         Assert.equal(l_proof.path[3], 28530707964116480372682371050079588246784656947532125351656222333555892493174, "path[3] doesnt match");
     }
+
+
+    function testVerifyProof () public
+    {
+        bytes32 leaf_hash = 0x0df1aef7cd1f602cde3f892440bf40f458c52e228b37476c02c59990d7978da3;
+
+        bytes memory leaf_proof = hex"000000000000000000000000000000000000000000000000000000000000001ee6843bf393570479a2656a819bf8d219c1dde89fe0b6f73c6299bf202fe755d1";
+
+        uint256[] memory l_state = new uint256[](1);
+        l_state[0] = 36309678569118526148872637980630051425706212671800593816880788491663080654976;
+
+        LithiumLink l_link = new LithiumLink(1, 29);
+        l_link.Update(29, l_state);
+        Assert.equal( l_link.GetHeight(), 30, "Link height incorrect!" );
+        Assert.equal( l_link.GetRoot(30), l_state[0], "Root incorrect!" );
+
+        // Check it's extracted properly
+        LithiumProver.Proof memory l_proof;
+        l_proof.ExtractFromBytes(leaf_proof);
+        Assert.equal( l_proof.block_id, 30, "Block ID mismatch" );
+        Assert.equal( l_link.GetHeight(), l_proof.block_id, "Link height incorrect!" );
+
+        // Check the merkle root verifies
+        Assert.equal( Merkle.Verify( l_state[0], uint256(leaf_hash), l_proof.path ), true, "Merkle path invalid!" );
+
+        // Then verify that, when combining the two, it works
+        LithiumProver l_prover = new LithiumProver(l_link);
+        Assert.equal( l_prover.Verify( 1, leaf_hash, leaf_proof ), true, "LithiumProver failed" );
+    }
 }

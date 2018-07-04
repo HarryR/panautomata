@@ -7,32 +7,21 @@ from random import randint
 from binascii import hexlify, unhexlify
 
 from ..crypto import keccak_256
-from ..utils import bytes_to_int, u256be
+from ..utils import u256be, bytes_to_int, bit_clear
 from ..ethrpc import EthJsonRpc
-from ..lithium.common import proof_for_tx, proof_for_event
+from ..lithium.common import proof_for_tx, proof_for_event, link_wait
 
 
-MOCK_PROVER = '0xcfeb869f69431e42cdb54a4f4f105c19c080a601'
+MOCK_PROVER = '0x5b1869d9a4c187f2eaa108f3062412ecf0526b24'
 
-LINK_ADDRESS = '0xc89ce4735882c9f0f0fe26686c53074e09b0d550'
-REAL_PROVER = '0x0290fb167208af455bb137780163b7b7a9a10c16'
+LINK_ADDRESS = '0xcfeb869f69431e42cdb54a4f4f105c19c080a601'
+REAL_PROVER = '0xe982e462b094850f12af94d21d470e21be9d0e9c'
 
 ACCOUNT_A = '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1'
-CONTRACT_A = '0xe982e462b094850f12af94d21d470e21be9d0e9c'
+CONTRACT_A = '0xd833215cbcc3f914bd1c9ece3ee7bf8b14f841bb'
 
 #ACCOUNT_B = '0xffcf8fdee72ac11b5c542428b35eef5769c409f0'
-CONTRACT_B = '0x59d3631c86bbe35ef041872d502f218a39fba150'
-
-
-def link_wait(link_contract, proof):
-    block_height = bytes_to_int(proof[:32])
-    print("waiting for block height", block_height)
-    while True:
-        latest_block = link_contract.LatestBlock()
-        if latest_block >= block_height:
-            break
-        print(".", latest_block)
-        time.sleep(1)
+CONTRACT_B = '0x9561c133dd8580860b6b7e504bc5aa500f0f06a7'
 
 
 def main():
@@ -61,8 +50,11 @@ def main():
     start_input = unhexlify(start_details['input'][2:])
     print("Input hashed", hexlify(keccak_256(start_input).digest()))
     start_leaf, start_root, start_proof = proof_for_tx(rpc_a, tx)
+    start_leaf_hash = keccak_256(start_leaf).digest()
+    start_leaf_hash_int = bytes_to_int(start_leaf_hash)
+    start_leaf_hash_mint = bit_clear(start_leaf_hash_int, 0xFF)
     print("Start Leaf", hexlify(start_leaf))
-    print("Start Leaf Hash", hexlify(keccak_256(start_leaf).digest()))
+    print("Start Leaf Hash", hexlify(start_leaf_hash),start_leaf_hash_int, start_leaf_hash_mint)
     print("Start Root", start_root)
     print("Start Proof", hexlify(start_proof))
 

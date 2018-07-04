@@ -40,7 +40,7 @@ library LithiumProofObj
     */
 
     function ExtractFromBytes ( LithiumProver.Proof memory self, bytes memory in_proof )
-        internal pure
+        internal view
     {
         uint n;
         uint k = 0;

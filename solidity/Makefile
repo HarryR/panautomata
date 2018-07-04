@@ -17,7 +17,7 @@ all: check-prereqs node_modules lint compile abi test
 abi: $(ABI_FILES)
 
 clean:
-	rm -rf build coverageEnv scTopics
+	rm -rf build coverageEnv scTopics coverage coverage.json
 
 dist-clean:
 	rm -rf node_modules

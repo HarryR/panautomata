@@ -1,5 +1,7 @@
 # Panautoma 
 
+[![Build Status](https://travis-ci.org/HarryR/panautomata.svg?branch=master)](https://travis-ci.org/HarryR/panautomata)
+
 This is a research project to make it easy for developers to write smart contracts which run across multiple block-chains without the complex underlying logic that makes it possible.
 
 Think of this as being a cross-chain oracle for events and transactions, or it could potentially be used as a way of integrating legacy systems with the block-chain.
@@ -14,12 +16,13 @@ Think of this as being a cross-chain oracle for events and transactions, or it c
 ### General
 
  * [ ] Getting started guide
- * [ ] ExamplePingPong FSM diagram
+ * [ ] ExamplePingPong FSM diagram + documentation
  * [ ] ExampleSwap FSM diagram
 
 ### Testing
 
- * [ ] Tests for LithiumLink contract
+ * [ ] A2A and B2B 'self-chain' tests, prove event from self
+ * [x] Tests for LithiumLink contract
  * [x] PingPong example works end-to-end
  * [ ] Swap example works end-to-end
 

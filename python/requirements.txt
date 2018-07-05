@@ -3,3 +3,4 @@ rlp<=0.6.0
 click
 requests
 pysha3
+coincurve

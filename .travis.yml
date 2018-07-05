@@ -5,5 +5,5 @@ install:
   - make -C python requirements requirements-dev
   - make -C solidity npm-install
 script:
-  - make
-  - make -C solidity coverage
+  - make -C python
+  - make -C solidity

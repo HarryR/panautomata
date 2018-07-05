@@ -9,11 +9,10 @@ import struct
 from collections import namedtuple
 
 # XXX: replace with something else, don't depend on ethereum repo?
-from ethereum.utils import big_endian_to_int, encode_int32
 
 from sha3 import keccak_256
 
-from .utils import Marshalled, u256be, safe_ord
+from .utils import Marshalled, u256be, safe_ord, big_endian_to_int
 
 try:
     import coincurve
@@ -63,7 +62,7 @@ class EcdsaSignature(_EcdsaSignatureStruct, Marshalled):
             result = ecdsa_raw_recover(rawhash, (v, r, s))
             if result:
                 x, y = result
-                pub = encode_int32(x) + encode_int32(y)
+                pub = u256be(x) + u256be(y)
             else:
                 raise ValueError('Invalid VRS')
         assert len(pub) == 64

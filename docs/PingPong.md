@@ -6,8 +6,8 @@ Every transaction and event emitted on either chain is provable via a merkle tre
 
 The two relevent files are:
 
- * [pingpong.py](python/panautomata/example/pingpong.py)
- * [ExamplePingPong.sol](solidity/contracts/example/ExamplePingPong.sol)
+ * [pingpong.py](../python/panautomata/example/pingpong.py)
+ * [ExamplePingPong.sol](../solidity/contracts/example/ExamplePingPong.sol)
 
 
 ## Operation (taken from `ExamplePingPong.sol` comments)

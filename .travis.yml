@@ -6,3 +6,4 @@ install:
   - make -C solidity npm-install
 script:
   - make
+  - make -C solidity coverage

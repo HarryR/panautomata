@@ -38,7 +38,7 @@ from requests.adapters import HTTPAdapter
 from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from .crypto import keccak_256
-from .utils import CustomJSONEncoder, require, big_endian_to_int, zpad, encode_int, normalise_address
+from .utils import CustomJSONEncoder, require, normalise_address
 
 GETH_DEFAULT_RPC_PORT = 8545
 ETH_DEFAULT_RPC_PORT = 8545

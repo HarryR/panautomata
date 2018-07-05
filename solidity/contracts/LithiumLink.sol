@@ -5,10 +5,9 @@
 pragma solidity 0.4.24;
 
 import "./Merkle.sol";
-import "./LithiumLinkInterface.sol";
 
 
-contract LithiumLink is LithiumLinkInterface
+contract LithiumLink
 {
     mapping(uint256 => uint256) internal m_roots;
 

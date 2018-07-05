@@ -19,7 +19,7 @@ import threading
 
 # TODO: import logging, use logging
 
-from ..utils import require, bytes_to_int
+from ..utils import require
 from ..merkle import merkle_tree
 
 from .common import process_block

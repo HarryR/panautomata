@@ -8,7 +8,7 @@ from sha3 import keccak_256
 
 from ..ethrpc import EthTransaction
 from ..utils import scan_bin, require, u256be, bytes_to_int
-from ..merkle import merkle_tree, merkle_path, merkle_proof, merkle_hash
+from ..merkle import merkle_tree, merkle_path, merkle_proof
 
 
 def pack_txn(txn):
@@ -162,11 +162,11 @@ def proof_for_tx(rpc, tx_hash):
 def verify_proof(root, leaf, proof):
     require(len(proof) % 32 == 0)
     require(len(proof) >= 64)
-    block_height = proof[:32]
+    # block_height = proof[:32]
     proof = proof[32:]
     path = []
     while len(proof):
-        path.append( bytes_to_int(proof[:32]) )
+        path.append(bytes_to_int(proof[:32]))
         proof = proof[32:]
 
     return merkle_proof(leaf, path, root)

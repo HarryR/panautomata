@@ -1,13 +1,10 @@
 # Copyright (c) 2018 HarryR. All Rights Reserved.
 # SPDX-License-Identifier: GPL-3.0+
 
-import os
-import time
 from random import randint
-from binascii import hexlify, unhexlify
+from binascii import hexlify
 
-from ..crypto import keccak_256
-from ..utils import u256be, bytes_to_int, bit_clear
+from ..utils import u256be
 from ..ethrpc import EthJsonRpc
 from ..lithium.common import proof_for_tx, proof_for_event, link_wait
 
@@ -20,7 +17,7 @@ REAL_PROVER = '0xe982e462b094850f12af94d21d470e21be9d0e9c'
 ACCOUNT_A = '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1'
 CONTRACT_A = '0xd833215cbcc3f914bd1c9ece3ee7bf8b14f841bb'
 
-#ACCOUNT_B = '0xffcf8fdee72ac11b5c542428b35eef5769c409f0'
+# ACCOUNT_B = '0xffcf8fdee72ac11b5c542428b35eef5769c409f0'
 CONTRACT_B = '0x9561c133dd8580860b6b7e504bc5aa500f0f06a7'
 
 
@@ -43,28 +40,28 @@ def main():
 
     print("Start")
     tx = alice.Start(guid, session)
-    start_receipt = tx.wait()
+    tx.wait()
     start_leaf, start_root, start_proof = proof_for_tx(rpc_a, tx)
 
     print("ReceiveStart")
     link_wait(link_b, start_proof)
     # TODO: wait until LithiumLink has been relayed the latest block
     tx = bob.ReceiveStart(guid, session, start_proof)
-    receive_start_receipt = tx.wait()
+    tx.wait()
     ping_proof = proof_for_event(rpc_b, tx, 0)
 
     for _ in range(0, 5):
         print("ReceivePing")
-        link_wait(link_a, ping_proof)        
+        link_wait(link_a, ping_proof)
         tx = alice.ReceivePing(guid, ping_proof)
         pong_proof = proof_for_event(rpc_a, tx, 0)
-        receive_ping_receipt = tx.wait()
+        tx.wait()
 
         print("ReceivePong")
         link_wait(link_b, pong_proof)
         tx = bob.ReceivePong(guid, pong_proof)
         ping_proof = proof_for_event(rpc_b, tx, 0)
-        receive_pong_receipt = tx.wait()
+        tx.wait()
 
 
 if __name__ == "__main__":

@@ -1,0 +1,5 @@
+install:
+  - make -C python requirements requirements-dev
+  - make -C solidity npm-install
+script:
+  - make

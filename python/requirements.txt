@@ -2,4 +2,4 @@ eth-abi>=1.1.0
 rlp<=0.6.0
 click
 requests
-sha3
+pysha3

@@ -16,8 +16,8 @@ all: check-prereqs node_modules lint test coverage
 .PHONY: abi
 abi: $(ABI_FILES)
 
-clean: clean-coverage
-	rm -rf build
+clean: clean-coverage stop-testrpc-a stop-testrpc-a
+	rm -rf build *.log
 
 clean-coverage:
 	rm -rf coverageEnv scTopics coverage coverage.json
@@ -62,6 +62,20 @@ testrpc-a: $(TRUFFLE)
 
 testrpc-b: $(TRUFFLE)
 	$(NPM) run testrpc-b
+
+background-testrpc-b:
+	$(NPM) run testrpc-b > .testrpc.b.log & echo $$! > .testrpc.b.pid
+	./utils/wait4httpd.sh http://localhost:8546/
+
+background-testrpc-a:
+	$(NPM) run testrpc-a > .testrpc.a.log & echo $$! > .testrpc.a.pid
+	./utils/wait4httpd.sh http://localhost:8545/
+
+stop-testrpc-%: .testrpc.%.pid
+	if [ -f $< ]; then kill -INT `cat $<` || true; fi; rm -f $<;
+
+wait-testrpc-b:
+	./utils/wait4httpd.sh http://localhost:8546/
 
 deploy-a: $(TRUFFLE)
 	$(TRUFFLE) deploy-a --network testrpc_a --reset

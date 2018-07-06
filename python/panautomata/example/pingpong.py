@@ -41,11 +41,10 @@ def main():
     print("Start")
     tx = alice.Start(guid, session)
     tx.wait()
-    start_leaf, start_root, start_proof = proof_for_tx(rpc_a, tx)
+    start_proof = proof_for_tx(rpc_a, tx)
 
     print("ReceiveStart")
     link_wait(link_b, start_proof)
-    # TODO: wait until LithiumLink has been relayed the latest block
     tx = bob.ReceiveStart(guid, session, start_proof)
     tx.wait()
     ping_proof = proof_for_event(rpc_b, tx, 0)

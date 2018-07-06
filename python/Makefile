@@ -8,6 +8,10 @@ PYLINT_IGNORE ?= C0330,too-many-arguments,invalid-name,line-too-long,missing-doc
 FLAKE8_IGNORE ?= E501
 
 
+LITHIUM_A2B_ARGS = --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8545 --rpc-to 127.0.0.1:8546 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.a2b.pid
+LITHIUM_B2A_ARGS = --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.b2a.pid
+
+
 #######################################################################
 
 
@@ -20,9 +24,13 @@ clean:
 #######################################################################
 # Distribution
 
-bdist:
-	$(PYTHON) setup.py bdist_egg
+bdist: bdist-wheel
+
+bdist-wheel:
 	$(PYTHON) setup.py bdist_wheel
+
+bdist-egg:
+	$(PYTHON) setup.py bdist_egg
 
 
 #######################################################################
@@ -30,10 +38,10 @@ bdist:
 #
 
 lithium-a2b:
-	$(PYTHON) -m$(NAME) lithium --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8545 --rpc-to 127.0.0.1:8546 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.a2b.pid
+	$(PYTHON) -m$(NAME) lithium $(LITHIUM_A2B_ARGS)
 
 lithium-b2a:
-	$(PYTHON) -m$(NAME) lithium --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.b2a.pid
+	$(PYTHON) -m$(NAME) lithium $(LITHIUM_B2A_ARGS)
 
 lithium-%-stop: .lithium.%.pid
 	if [ -f $< ]; then kill -INT `cat $<` || true; fi; rm -f $<;

@@ -10,4 +10,3 @@ if __name__ == "__main__":
         data = json.load(handle)
         print(json.dumps(data['abi']))
     sys.exit(0)
-

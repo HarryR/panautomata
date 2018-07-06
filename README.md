@@ -16,8 +16,9 @@ Think of this as being a cross-chain oracle for events and transactions, or it c
 ### General
 
  * [ ] Getting started guide
- * [ ] ExamplePingPong FSM diagram + documentation
+ * [x] ExamplePingPong FSM diagram + documentation
  * [ ] ExampleSwap FSM diagram
+ * [ ] Registry/Registrar contract, single entry-point to lookup other contracts
 
 ### Testing
 
@@ -28,8 +29,9 @@ Think of this as being a cross-chain oracle for events and transactions, or it c
 
 ### Toolchain ToDo
 
- * [ ] Travis CI
- * [ ] Python coverage
+ * [x] Travis CI
+ * [ ] End-to-end tests under Travis
+ * [ ] Python coverage / Codeclimate
  * [x] Solidity code coverage
  * [ ] Docker image
  * [ ] Docker image upload from Travis

@@ -156,7 +156,7 @@ def proof_for_tx(rpc, tx_hash):
     require(merkle_proof(tx_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
     # Proof as accepted by LithiumProver instance
-    return tx_leaf, root, u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
+    return u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
 
 
 def verify_proof(root, leaf, proof):

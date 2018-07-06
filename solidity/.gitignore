@@ -5,3 +5,4 @@ coverageEnv/
 solc-static-linux
 coverage.json
 coverage/
+*.log

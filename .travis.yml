@@ -7,3 +7,4 @@ install:
 script:
   - make -C python
   - make -C solidity
+  - make end-to-end

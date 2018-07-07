@@ -63,7 +63,18 @@ def zpad(x, l):
 
 
 def u256be(v):
+    # TODO: verify range
     return zpad(int_to_big_endian(v), 32)
+
+
+def u64be(v):
+    # TODO: verify range
+    return zpad(int_to_big_endian(v), 8)
+
+
+def u32be(v):
+    # TODO: verify range
+    return zpad(int_to_big_endian(v), 4)
 
 
 def flatten(l):

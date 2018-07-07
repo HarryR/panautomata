@@ -40,7 +40,8 @@ def main():
 
     print("Start")
     tx = alice.Start(guid, session)
-    tx.wait()
+    start_tx_receipt = tx.wait()
+    print("Start TX receipt", start_tx_receipt)
     start_proof = proof_for_tx(rpc_a, tx)
 
     print("ReceiveStart")
@@ -60,7 +61,8 @@ def main():
         link_wait(link_b, pong_proof)
         tx = bob.ReceivePong(guid, pong_proof)
         ping_proof = proof_for_event(rpc_b, tx, 0)
-        tx.wait()
+        receieve_pong_receipt = tx.wait()
+        print("ReceivePong receipt", receieve_pong_receipt)
 
 
 if __name__ == "__main__":

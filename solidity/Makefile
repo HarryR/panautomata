@@ -16,7 +16,7 @@ all: check-prereqs node_modules lint test coverage
 .PHONY: abi
 abi: $(ABI_FILES)
 
-clean: clean-coverage stop-testrpc-a stop-testrpc-a
+clean: clean-coverage stop-testrpc-a stop-testrpc-b
 	rm -rf build *.log
 
 clean-coverage:
@@ -92,3 +92,8 @@ console: $(TRUFFLE)
 .PHONY: coverage
 coverage: clean-coverage
 	$(NPM) run coverage
+
+# Retrieve static built solidity compiler for Linux (useful...)
+solc-static-linux:
+	wget -O $@ "https://github.com/ethereum/solidity/releases/download/v$(shell ./utils/get-package-version.py package.json solc)/solc-static-linux" || rm -f $@
+	chmod 755 $@

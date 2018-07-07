@@ -15,6 +15,7 @@ Think of this as being a cross-chain oracle for events and transactions, or it c
 
 ### General
 
+ * [ ] Improved logging in Python code
  * [ ] Getting started guide
  * [x] ExamplePingPong FSM diagram + documentation
  * [ ] ExampleSwap FSM diagram
@@ -30,7 +31,7 @@ Think of this as being a cross-chain oracle for events and transactions, or it c
 ### Toolchain ToDo
 
  * [x] Travis CI
- * [ ] End-to-end tests under Travis
+ * [x] End-to-end tests under Travis
  * [ ] Python coverage / Codeclimate
  * [x] Solidity code coverage
  * [ ] Docker image

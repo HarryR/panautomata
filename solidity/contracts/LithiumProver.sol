@@ -18,24 +18,26 @@ library LithiumProofObj
     function bytesToUint64 (bytes b, uint offset)
         private view returns (uint64)
     {
-        uint64[1] memory out;
+        uint256[1] memory out;
         assembly {
             let baddr := add(add(b, 32), offset)
-            let ret := staticcall(3000, 4, baddr, 32, out, 8)
+            let ret := staticcall(3000, 4, baddr, 32, add(out, 24), 8)
         }
-        return out[0];
+        return uint64(out[0]);
     }
+
 
     function bytesToUint32 (bytes b, uint offset)
         private view returns (uint32)
     {
-        uint32[1] memory out;
+        uint256[1] memory out;
         assembly {
             let baddr := add(add(b, 32), offset)
-            let ret := staticcall(3000, 4, baddr, 32, out, 4)
+            let ret := staticcall(3000, 4, baddr, 32,add(out, 28), 4)
         }
-        return out[0];
+        return uint32(out[0]);
     }
+
 
     function bytesToUint256 (bytes b, uint offset)
         private view returns (uint256)

@@ -21,7 +21,6 @@ def pack_prefix(txn_or_log, log_idx=None):
 
     tx_block_height = int(txn_or_log['blockNumber'], 16)
     tx_index = int(txn_or_log['transactionIndex'], 16)
-    log_idx = log_idx
 
     result = u64be(tx_block_height) + u32be(tx_index) + u32be(log_idx)
     require(len(result) == 16)
@@ -116,7 +115,6 @@ def process_block(rpc, block_height):
     # XXX: given a processed block, we need to be able to easily identify the leaf
     #      for a specific transaction or event within a transaction
     block = rpc.eth_getBlockByNumber(block_height, False)
-    print("process_block block", block)
     if not block['transactions']:
         return [], 0, 0
 
@@ -168,7 +166,6 @@ def proof_for_tx(rpc, tx_hash):
     tx_leaf = process_transaction(rpc, tx_hash)
 
     transaction = rpc.eth_getTransactionByHash(tx_hash)
-    print("proof_for_tx transaction", transaction)
     tx_block_height = int(transaction['blockNumber'], 16)
 
     block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)

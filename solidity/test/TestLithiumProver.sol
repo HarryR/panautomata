@@ -11,51 +11,54 @@ contract TestLithiumProver
 
     function testExtractProof () public
     {
-        bytes memory l_proof_bytes = hex"107f0dabebec72ed1530a194f351489c0b108ce9dd96ab85b43fb81897f75da65015084426392b81479120687beb1bb84dc4bb7cea0c82e8f4360d7506499be478d4a2f59e914788af07c80a44332cfee635bdce9f1ea35faf90966816395c4526bde061e4ca095e9ebb33d68b1d8669929e9abc47f4552ccf9edfc9bf3349503f13cef6a3c1b4c5dc41ce02f7acba57951562612b259c5e6142939e973f1b76";
+        bytes memory l_proof_bytes = hex"8d9ccdca4ce221658d32a950df33c0f6b1ce9e77dbc8c9eb7c4e8233ecdfbc79bc1c4a94a3986694937f101743b7d480425fcd91f83a3318dee26da0fb6f83a2d0c4b1ded41be05fbb3474ad595ece81";
 
         LithiumProver.Proof memory l_proof;
 
         l_proof.ExtractFromBytes(l_proof_bytes);
 
-        Assert.equal(l_proof.block_id, 7461489512258163374041530170852127195527652993822138159417364311477008686502, "Block id doesnt match");
+        Assert.equal(uint256(l_proof.block_id), 10204257124471677285, "Block id doesnt match");
 
-        Assert.equal(l_proof.path.length, 4, "Path length doesnt match");
+        Assert.equal(uint256(l_proof.tx_idx), 2368907600, "Transaction index doesnt match");
 
-        Assert.equal(l_proof.path[0], 36222188726294190264724830160807535941260076560650537550934797372035380648932, "path[0] doesnt match");
+        Assert.equal(uint256(l_proof.log_idx), 3744710902, "Log index doesnt match");
 
-        Assert.equal(l_proof.path[1], 54653238112519204180324512860157472072788888548741498024736590441498952686661, "path[1] doesnt match");
+        Assert.equal(l_proof.path.length, 2, "Path length doesnt match");
 
-        Assert.equal(l_proof.path[2], 17523370971798060733335806876259516988655538119343184483725259609467205667152, "path[2] doesnt match");
+        Assert.equal(l_proof.path[0], 80424438401884935789970964740987389972556002562470641060097768235088337163392, "path[0] doesnt match");
 
-        Assert.equal(l_proof.path[3], 28530707964116480372682371050079588246784656947532125351656222333555892493174, "path[3] doesnt match");
+        Assert.equal(l_proof.path[1], 30021917270984277206208152510958953294091162003115278692267036093961027374721, "path[1] doesnt match");
     }
-
 
     function testVerifyProof () public
     {
-        bytes32 leaf_hash = 0x0df1aef7cd1f602cde3f892440bf40f458c52e228b37476c02c59990d7978da3;
+        bytes memory outer_leaf_bytes = hex"000000000000000a0000000000000000351cae316a571ad60d38b8f87666d79e47314b66cafd00cebca4d0b6f435a175";
+        bytes32 outer_leaf_hash = keccak256(outer_leaf_bytes);
+        bytes32 inner_leaf_hash = 0x351cae316a571ad60d38b8f87666d79e47314b66cafd00cebca4d0b6f435a175;
 
-        bytes memory leaf_proof = hex"000000000000000000000000000000000000000000000000000000000000001ee6843bf393570479a2656a819bf8d219c1dde89fe0b6f73c6299bf202fe755d1";
+        bytes memory proof_bytes = hex"000000000000000a0000000000000000e6843bf393570479a2656a819bf8d219c1dde89fe0b6f73c6299bf202fe755d1";
 
-        uint256[] memory l_state = new uint256[](1);
-        l_state[0] = 36309678569118526148872637980630051425706212671800593816880788491663080654976;
+        uint256[] memory l_roots = new uint256[](1);
+        l_roots[0] = 18816486038835455661079455548344429740997917459031915165980477461056310113737;
 
-        LithiumLink l_link = new LithiumLink(1, 29);
-        l_link.Update(29, l_state);
-        Assert.equal( l_link.GetHeight(), 30, "Link height incorrect!" );
-        Assert.equal( l_link.GetRoot(30), l_state[0], "Root incorrect!" );
+        uint block_height = 10;
+
+        LithiumLink l_link = new LithiumLink(1, block_height - 1);
+        l_link.Update(block_height - 1, l_roots);
+        Assert.equal( l_link.GetHeight(), block_height, "Link height incorrect!" );
+        Assert.equal( l_link.GetRoot(block_height), l_roots[0], "Root incorrect!" );
 
         // Check it's extracted properly
         LithiumProver.Proof memory l_proof;
-        l_proof.ExtractFromBytes(leaf_proof);
-        Assert.equal( l_proof.block_id, 30, "Block ID mismatch" );
+        l_proof.ExtractFromBytes(proof_bytes);
+        Assert.equal( l_proof.block_id, block_height, "Block ID mismatch" );
         Assert.equal( l_link.GetHeight(), l_proof.block_id, "Link height incorrect!" );
 
         // Check the merkle root verifies
-        Assert.equal( Merkle.Verify( l_state[0], uint256(leaf_hash), l_proof.path ), true, "Merkle path invalid!" );
+        Assert.equal( Merkle.Verify( l_roots[0], uint256(outer_leaf_hash), l_proof.path ), true, "Merkle path invalid!" );
 
         // Then verify that, when combining the two, it works
         LithiumProver l_prover = new LithiumProver(l_link);
-        Assert.equal( l_prover.Verify( 1, leaf_hash, leaf_proof ), true, "LithiumProver failed" );
+        Assert.equal( l_prover.Verify( 1, inner_leaf_hash, proof_bytes ), true, "LithiumProver failed" );
     }
 }

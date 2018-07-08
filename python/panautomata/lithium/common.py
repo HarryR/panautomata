@@ -4,11 +4,28 @@
 
 import time
 
-from sha3 import keccak_256
-
+from ..crypto import keccak_256
 from ..ethrpc import EthTransaction
-from ..utils import scan_bin, require, u256be, bytes_to_int
+from ..utils import scan_bin, require, u256be, u64be, u32be, bytes_to_int
 from ..merkle import merkle_tree, merkle_path, merkle_proof
+
+
+def pack_prefix(txn_or_log, log_idx=None):
+    """
+    Prefix for merkle leaves, which binds them to a specific log, transaction at
+    a block height.
+    """
+    if log_idx is None:
+        log_idx = int(txn_or_log.get('logIndex', '0x0'), 16)
+    assert isinstance(log_idx, int)
+
+    tx_block_height = int(txn_or_log['blockNumber'], 16)
+    tx_index = int(txn_or_log['transactionIndex'], 16)
+
+    result = u64be(tx_block_height) + u32be(tx_index) + u32be(log_idx)
+    require(len(result) == 16)
+
+    return result
 
 
 def pack_txn(txn):
@@ -23,14 +40,15 @@ def pack_txn(txn):
     tx_input = scan_bin(txn['input'])
 
     # 104 bytes
-    result = b''.join([
+    inner_leaf = b''.join([
         tx_from,
         tx_to,
         u256be(tx_value),
         keccak_256(tx_input).digest()
     ])
-    assert len(result) == 104
-    return result
+    require(len(inner_leaf) == 104)
+
+    return pack_prefix(txn) + keccak_256(inner_leaf).digest()
 
 
 def pack_log(log):
@@ -48,13 +66,14 @@ def pack_log(log):
     Event type is a hash of the event signature, e.g. KECCAK256('MyEvent(address,uint256)')
     """
     # 84 bytes
-    result = b''.join([
+    inner_leaf = b''.join([
         scan_bin(log['address']),
         scan_bin(log['topics'][0]),
         keccak_256(scan_bin(log['data'])).digest()
     ])
-    assert len(result) == 84
-    return result
+    require(len(inner_leaf) == 84)
+
+    return pack_prefix(log) + keccak_256(inner_leaf).digest()
 
 
 def process_logs(rpc, tx_hash):
@@ -125,6 +144,7 @@ def proof_for_event(rpc, tx_hash, log_idx):
     tx_block_height = int(transaction['blockNumber'], 16)
 
     block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
+
     tree, root = merkle_tree(block_items)
 
     # TODO: verify the merkle root matches the on-chain merkle root submitted to LithiumLink
@@ -134,7 +154,8 @@ def proof_for_event(rpc, tx_hash, log_idx):
     require(merkle_proof(event_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
     # Proof as accepted by LithiumProver instance
-    return u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
+    prefix = pack_prefix(transaction, log_idx)
+    return prefix + b''.join([u256be(_) for _ in proof])
 
 
 def proof_for_tx(rpc, tx_hash):
@@ -148,6 +169,7 @@ def proof_for_tx(rpc, tx_hash):
     tx_block_height = int(transaction['blockNumber'], 16)
 
     block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
+
     tree, root = merkle_tree(block_items)
 
     # TODO: verify the merkle root matches the on-chain merkle root submitted to LithiumLink
@@ -156,14 +178,15 @@ def proof_for_tx(rpc, tx_hash):
     require(merkle_proof(tx_leaf, proof, root) is True, "Cannot confirm merkle proof")
 
     # Proof as accepted by LithiumProver instance
-    return u256be(tx_block_height) + b''.join([u256be(_) for _ in proof])
+    prefix = pack_prefix(transaction)
+    return prefix + b''.join([u256be(_) for _ in proof])
 
 
 def verify_proof(root, leaf, proof):
-    require(len(proof) % 32 == 0)
-    require(len(proof) >= 64)
-    # block_height = proof[:32]
-    proof = proof[32:]
+    # Prefix is 16 bytes
+    require((len(proof) - 16) % 32 == 0)
+    require((len(proof) - 16) >= 32)
+    proof = proof[16:]
     path = []
     while len(proof):
         path.append(bytes_to_int(proof[:32]))
@@ -172,16 +195,15 @@ def verify_proof(root, leaf, proof):
     return merkle_proof(leaf, path, root)
 
 
-def link_wait(link_contract, proof):
+def link_wait(link_contract, proof, interval=1):
     """
     Wait for the LithiumLink contract to reach the height required
     to validate the proof.
     """
-    block_height = bytes_to_int(proof[:32])
-    print("waiting for block height", block_height)
+    block_height = bytes_to_int(proof[:8])
     while True:
         latest_block = link_contract.GetHeight()
         if latest_block >= block_height:
             break
-        print(".", latest_block)
-        time.sleep(1)
+        time.sleep(interval)
+        print("Waiting for block", block_height)

@@ -22,14 +22,16 @@ end-to-end:
 	make -C solidity background-testrpc-b
 	make -C solidity deploy-b
 
-	make -C python lithium-a2b &
-	make -C python lithium-b2a &
+	make -C python lithium-a2b > /dev/null &
+	make -C python lithium-b2a > /dev/null &
 	make -C python example-pingpong
-	make -C python lithium-a2b-stop
-	make -C python lithium-b2a-stop
+	make stop-end-to-end
 
-	make -C solidity stop-testrpc-a
-	make -C solidity stop-testrpc-b
+stop-end-to-end:
+	make -C python lithium-a2b-stop || true
+	make -C python lithium-b2a-stop || true
+	make -C solidity stop-testrpc-a || true
+	make -C solidity stop-testrpc-b || true
 
 
 #######################################################################

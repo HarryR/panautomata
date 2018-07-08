@@ -12,6 +12,33 @@ import "./LithiumLink.sol";
 
 library LithiumProofObj
 {
+    // TODO: replace these with a more generic version?
+    // TODO: reduce duplication
+
+    function bytesToUint64 (bytes b, uint offset)
+        private view returns (uint64)
+    {
+        uint256[1] memory out;
+        assembly {
+            let baddr := add(add(b, 32), offset)
+            let ret := staticcall(3000, 4, baddr, 32, add(out, 24), 8)
+        }
+        return uint64(out[0]);
+    }
+
+
+    function bytesToUint32 (bytes b, uint offset)
+        private view returns (uint32)
+    {
+        uint256[1] memory out;
+        assembly {
+            let baddr := add(add(b, 32), offset)
+            let ret := staticcall(3000, 4, baddr, 32,add(out, 28), 4)
+        }
+        return uint32(out[0]);
+    }
+
+
     function bytesToUint256 (bytes b, uint offset)
         private view returns (uint256)
     {
@@ -29,23 +56,32 @@ library LithiumProofObj
     {
         uint n;
         uint k = 0;
-        uint m = 0;
+        uint m = 16;
 
-        // Encoded as uint256, then array of uint256 path elements
+        // Encoded as (uint64,uint32,uint32) then array of uint256 path elements
         // No length specifier is needed, as that's deducible from total length
-        require( in_proof.length > 32, "Proof too short" );
-        require( in_proof.length % 32 == 0, "Proof invalid length (mod 32)" );
+        // Minimum size: 16 bytes + (N * 32 bytes) where N >= 1
 
-        self.block_id = bytesToUint256(in_proof, 0);
+        uint paths_len_bytes = (in_proof.length - 16);
 
-        self.path = new uint256[]( (in_proof.length - 32) / 32 );
+        require( in_proof.length >= 48 );
+        require( paths_len_bytes % 32 == 0 );
 
-        for( n = 32; n < in_proof.length; n += 32 )
+        // Extract 'proof header' fields
+        self.block_id = bytesToUint64(in_proof, 0);
+        self.tx_idx = bytesToUint32(in_proof, 8);       // offset 64 bits
+        self.log_idx = bytesToUint32(in_proof, 12);     // offset 96 bits
+
+        // Then extract each item in the path
+        self.path = new uint256[]( paths_len_bytes / 32 );
+
+        for( n = 16; n < in_proof.length; n += 32 )
         {
-            m += 32;
             self.path[ k++ ] = bytesToUint256(in_proof, m);
+
+            m += 32;
         }
-    }   
+    }
 }
 
 
@@ -55,11 +91,18 @@ contract LithiumProver
 
     struct Proof
     {
-        uint256 block_id;
+        // Can the 'proof header' be packed into a single 256bit field?
+        // Solidity doesn't support Gcc style bit-packed struct fields
+        // But, it only matters if proof ever needs to be stored, which it shouldn't!
+
+        uint64 block_id;
+        uint32 tx_idx;
+        uint32 log_idx;
+
         uint256[] path;
     }
 
-    LithiumLink m_link;
+    LithiumLink internal m_link;
 
 
     constructor ( LithiumLink in_link )
@@ -72,15 +115,23 @@ contract LithiumProver
     function Verify( uint64 in_network_id, bytes32 in_leaf_hash, bytes in_proof_bytes )
         external view returns (bool)
     {
-        //require( in_network_id == m_link.GetNetworkId(), "Invalid network id" );
+        //require( in_network_id == m_link.GetNetworkId() );
 
-        require( in_leaf_hash != 0x0, "Invalid leaf hash" );
+        require( in_leaf_hash != 0x0 );
 
         Proof memory l_proof;
 
         l_proof.ExtractFromBytes(in_proof_bytes);
 
-        return m_link.Verify( l_proof.block_id, uint256(in_leaf_hash), l_proof.path );
+        // Leaf is hashed with parameters from proof to make it unique to that proof
+        bytes32 l_leaf_hash = keccak256(abi.encodePacked(
+            uint64(l_proof.block_id),
+            uint32(l_proof.tx_idx),
+            uint32(l_proof.log_idx),
+            in_leaf_hash
+        ));
+
+        return m_link.Verify( l_proof.block_id, uint256(l_leaf_hash), l_proof.path );
     }
 
 

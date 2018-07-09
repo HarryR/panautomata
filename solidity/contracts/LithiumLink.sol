@@ -1,4 +1,3 @@
-// Copyright (c) 2016-2018 Clearmatics Technologies Ltd
 // Copyright (c) 2018 HarryR. All Rights Reserved.
 // SPDX-License-Identifier: LGPL-3.0+
 
@@ -9,19 +8,24 @@ import "./Merkle.sol";
 
 contract LithiumLink
 {
-    mapping(uint256 => uint256) internal m_roots;
+    mapping(uint64 => Block) internal m_blocks;
 
-    uint256 internal m_height;
+    uint64 internal m_height;
 
     uint64 internal m_network_id;
 
+    struct Block {
+        uint256 merkle_root;
+        uint256 block_hash;
+    }
 
-    constructor ( uint64 in_network_id, uint256 in_height )
+
+    constructor ( uint64 in_network_id, uint64 in_start_height )
         public
     {
-        require( in_height >= 0 );
+        require( in_start_height >= 0 );
 
-        m_height = in_height;
+        m_height = in_start_height;
 
         m_network_id = in_network_id;
     }
@@ -39,37 +43,57 @@ contract LithiumLink
     }
 
 
-    function Update( uint256 in_start_height, uint256[] in_state )
+    // TODO: verify owner matches
+    /**
+    * Update blocks by providing the new merkle roots and block hashes
+    * in_blocks is supplied in pairs of (merkle_root, block_hash)
+    *
+    * The current height must be provided to avoid out of order updates.
+    */
+    function Update( uint64 in_start_height, uint256[] in_blocks )
         public
     {
-        require( in_state.length > 0 );
+        uint64 l_offset = in_start_height;
 
-        // TODO: verify owner matches
+        require( in_blocks.length > 0 );
+
+        require( in_blocks.length % 2 == 0 );
 
         // Guard to prevent out-of-order updates
         require( in_start_height == m_height );
 
-        for (uint256 i = 0; i < in_state.length; i++)
+        for (uint64 i = 0; i < in_blocks.length; i += 2)
         {
-            m_roots[in_start_height + 1 + i] = in_state[i];
+            m_blocks[++l_offset] = Block(in_blocks[i], in_blocks[i + 1]);
         }
 
-        m_height = in_start_height + in_state.length;
+        m_height = l_offset;
     }
 
 
-    function Verify( uint256 block_height, uint256 leaf_hash, uint256[] proof )
+    function Verify( uint64 block_height, uint256 leaf_hash, uint256[] proof )
         public view returns (bool)
     {
-        return Merkle.Verify( GetRoot(block_height), leaf_hash, proof );
+        return Merkle.Verify( GetMerkleRoot(block_height), leaf_hash, proof );
     }
 
 
-    function GetRoot( uint256 in_height )
+    function GetBlockHash( uint64 in_height )
+        public view returns (uint256 out_hash)
+    {
+        out_hash = m_blocks[in_height].block_hash;
+
+        require( out_hash != 0 );
+    }
+
+
+    function GetMerkleRoot( uint64 in_height )
         public view returns (uint256 out_root)
     {
-        out_root = m_roots[in_height];
+        Block storage l_block = m_blocks[in_height];
 
-        require( out_root != 0 );
+        require( l_block.block_hash != 0 );
+
+        out_root = l_block.merkle_root;
     }
 }

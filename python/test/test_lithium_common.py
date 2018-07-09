@@ -75,8 +75,10 @@ class TestLithiumCommon(unittest.TestCase):
         leaf = process_transaction(FAKERPC_INSTANCE, tx_hash)
         self.assertEqual(leaf, unhexlify('0ecee24d0107cfaa2eb4977d9a9c76e91c955b504820a15130928c180f3d36150000000000000000351cae316a571ad60d38b8f87666d79e47314b66cafd00cebca4d0b6f435a175'))
 
+        self.assertEqual(block.root, 46400391443850433615832446384339427859065145896617710468747042593688602017395)
+
         proof = proof_for_tx(FAKERPC_INSTANCE, tx_hash)
         self.assertEqual(len(proof), 48)
-        self.assertEqual(proof, b'\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\x00\xe6\x84;\xf3\x93W\x04y\xa2ej\x81\x9b\xf8\xd2\x19\xc1\xdd\xe8\x9f\xe0\xb6\xf7<b\x99\xbf /\xe7U\xd1')
+        self.assertEqual(proof, unhexlify('000000000000000a0000000000000000e6843bf393570479a2656a819bf8d219c1dde89fe0b6f73c6299bf202fe755d1'))
 
         self.assertEqual(verify_proof(block.root, leaf, proof), True)

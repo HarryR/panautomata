@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: LGPL-3.0+
 
 pragma solidity 0.4.24;
-pragma experimental ABIEncoderV2;
 
 import "./Merkle.sol";
 

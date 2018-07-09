@@ -125,7 +125,6 @@ class Lithium(object):
         require(onchain_root == newest_block.root, "Root mismatch")
 
         # XXX: what happens when gas limit gets hit? (e.g. too many block submitted at once)
-        # TODO: if successful, verify the latest root matches the one we submitted
 
     def run(self):
         """ Launches the etheventrelay on a thread"""
@@ -142,7 +141,7 @@ class Lithium(object):
 
         # Submit any remaining items
         if items:
-            self.submit(batch)
+            self.submit(items)
 
         if self.running:
             self._run_event.clear()

@@ -9,8 +9,6 @@ from ..ethrpc import EthJsonRpc
 from ..lithium.common import proof_for_tx, proof_for_event, link_wait
 
 
-MOCK_PROVER = '0x5b1869d9a4c187f2eaa108f3062412ecf0526b24'
-
 LINK_ADDRESS = '0xcfeb869f69431e42cdb54a4f4f105c19c080a601'
 REAL_PROVER = '0xe982e462b094850f12af94d21d470e21be9d0e9c'
 

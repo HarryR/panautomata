@@ -63,17 +63,17 @@ FAKERPC_INSTANCE = FakeRPC(
 class TestLithiumCommon(unittest.TestCase):
     def test_block(self):
         block, tx_count, log_count = process_block(FAKERPC_INSTANCE, 10)
-        self.assertEqual(bytes_to_int(block.items[0]), 21359870359209100823974240316624348723385542012113319844900486161227333295717347719776129330291061)
+        self.assertEqual(block.items[0], unhexlify('0ecee24d0107cfaa2eb4977d9a9c76e91c955b504820a15130928c180f3d36150000000000000000351cae316a571ad60d38b8f87666d79e47314b66cafd00cebca4d0b6f435a175'))
         self.assertEqual(tx_count, 1)
         self.assertEqual(log_count, 0)
 
     def test_proof_tx(self):
         block, block_tx_count, block_log_count = process_block(FAKERPC_INSTANCE, 10)
-        self.assertEqual(block.hash, '0x0ecee24d0107cfaa2eb4977d9a9c76e91c955b504820a15130928c180f3d3615')
+        self.assertEqual(block.hash, bytes_to_int(unhexlify('0ecee24d0107cfaa2eb4977d9a9c76e91c955b504820a15130928c180f3d3615')))
 
         tx_hash = '0x87f2dd1a154c8f11a153bdcd90fc67ab850e9f32f05a5becc79d3fe035b1c4fd'
         leaf = process_transaction(FAKERPC_INSTANCE, tx_hash)
-        self.assertEqual(leaf, b'\x00\x00\x00\x00\x00\x00\x00\n\x00\x00\x00\x00\x00\x00\x00\x005\x1c\xae1jW\x1a\xd6\r8\xb8\xf8vf\xd7\x9eG1Kf\xca\xfd\x00\xce\xbc\xa4\xd0\xb6\xf45\xa1u')
+        self.assertEqual(leaf, unhexlify('0ecee24d0107cfaa2eb4977d9a9c76e91c955b504820a15130928c180f3d36150000000000000000351cae316a571ad60d38b8f87666d79e47314b66cafd00cebca4d0b6f435a175'))
 
         proof = proof_for_tx(FAKERPC_INSTANCE, tx_hash)
         self.assertEqual(len(proof), 48)

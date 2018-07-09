@@ -11,13 +11,6 @@ from functools import reduce
 from rlp.sedes import big_endian_int
 from rlp.utils import decode_hex, str_to_bytes
 
-if sys.version_info.major == 2:
-    def bytearray_to_bytestr(value):
-        return bytes(''.join(chr(c) for c in value))
-else:
-    def bytearray_to_bytestr(value):
-        return bytes(value)
-
 
 TT256 = 2 ** 256
 

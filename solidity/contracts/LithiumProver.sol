@@ -117,10 +117,12 @@ contract LithiumProver is ProofVerifierInterface
 
         l_proof.ExtractFromBytes(in_proof_bytes);
 
+        uint256 block_hash = m_link.GetBlockHash(l_proof.block_id);
+        require( block_hash != 0 );
+
         // Leaf is hashed with parameters from proof to make it unique to that proof
         bytes32 l_leaf_hash = keccak256(abi.encodePacked(
-            //uint64(m_link.GetNetworkId()),
-            uint64(l_proof.block_id),
+            block_hash,
             uint32(l_proof.tx_idx),
             uint32(l_proof.log_idx),
             in_leaf_hash

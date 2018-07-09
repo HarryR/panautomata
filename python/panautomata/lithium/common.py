@@ -100,7 +100,7 @@ def pack_log(log):
     require(len(inner_leaf) == 84)
 
     outer_leaf = leaf_prefix(log) + keccak_256(inner_leaf).digest()
-    require( len(outer_leaf) == 32 + 40 )
+    require(len(outer_leaf) == 32 + 40)
 
     return outer_leaf
 

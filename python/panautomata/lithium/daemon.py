@@ -20,7 +20,6 @@ import threading
 # TODO: import logging, use logging
 
 from ..utils import require
-from ..merkle import merkle_tree
 
 from .common import process_block
 
@@ -47,16 +46,16 @@ class Lithium(object):
         Process a group of blocks, returning the packed events and transactions
         """
         print("Processing block group")
-        items = []
+        out_blocks = []
         group_tx_count = 0
         group_log_count = 0
         for block_height in block_group:
-            block_items, tx_count, log_count = process_block(self._rpc_from, block_height)
-            items.append((block_height, block_items))
+            block, tx_count, log_count = process_block(self._rpc_from, block_height)
+            out_blocks.append(block)
             group_tx_count += tx_count
             group_log_count += log_count
 
-        return items, group_tx_count, group_log_count
+        return out_blocks, group_tx_count, group_log_count
 
     def get_block_group(self):
         """
@@ -76,7 +75,7 @@ class Lithium(object):
         out_blocks = []
         for block_no in range(synched_block + 1, current_block + 1):
             out_blocks.append(block_no)
-            if len(out_blocks) == self._batch_size:
+            if len(out_blocks) >= self._batch_size:
                 break
 
         return out_blocks
@@ -98,12 +97,29 @@ class Lithium(object):
     def submit(self, batch):
         """Submit batch of merkle roots to LithiumLink"""
         print("Submitting batch of", len(batch), "blocks")
-        for block_height, block_root in batch:
-            print(" -", block_height, block_root)
-        transaction = self.contract.Update(batch[0][0] - 1, [_[1] for _ in batch])
+        for block in batch:
+            print(" -", block.height, block.root, block.hash)
+
+        # To be passed to Update(): flat list of pairs of: merkle_root, block_hash
+        update_details = list()
+        start_height = None
+        newest_block = batch[-1]
+        for block in batch:
+            if start_height is None:
+                start_height = block.height
+            update_details += [block.root, block.hash]
+
+        # Submit and wait for transaction to be mined / accepted
+        transaction = self.contract.Update(start_height - 1, update_details)
         receipt = transaction.wait()
         if int(receipt['status'], 16) == 0:
             raise RuntimeError("Error when submitting blocks! Receipt: " + str(receipt))
+
+        onchain_height = self.contract.GetHeight()
+        require(onchain_height == newest_block.height, "Height mismatch")
+
+        onchain_root = self.contract.GetMerkleRoot(onchain_height)
+        require(onchain_root == newest_block.root, "Root mismatch")
 
         # XXX: what happens when gas limit gets hit? (e.g. too many block submitted at once)
         # TODO: if successful, verify the latest root matches the one we submitted
@@ -113,24 +129,20 @@ class Lithium(object):
         require(False is self._run_event.is_set(), "Already running")
         self._run_event.set()
 
-        print("Starting block iterator")
+        items = list()
 
-        batch = []
         for block_group in self.iter_blocks():
             items, group_tx_count, group_log_count = self.process_block_group(block_group)
             print("blocks %d-%d (%d tx, %d events)" % (min(block_group), max(block_group), group_tx_count, group_log_count))
-
-            for block_height, block_items in items:
-                _, root = merkle_tree(block_items)
-                batch.append((block_height, root))
-
-            if batch:
-                self.submit(batch)
-                batch = []
+            self.submit(items)
+            items = []
 
         # Submit any remaining items
-        if batch:
+        if items:
             self.submit(batch)
+
+        if self.running:
+            self._run_event.clear()
 
     def stop(self):
         """Turn off the 'running' event, causing any loop to exit"""

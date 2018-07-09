@@ -16,8 +16,9 @@ all: check-prereqs node_modules lint test coverage
 .PHONY: abi
 abi: $(ABI_FILES)
 
-clean: clean-coverage stop-testrpc-a stop-testrpc-b
+clean: clean-coverage
 	rm -rf build *.log
+	make stop-testrpc-a stop-testrpc-b || true
 
 clean-coverage:
 	rm -rf coverageEnv scTopics coverage coverage.json

@@ -91,10 +91,6 @@ contract LithiumProver
 
     struct Proof
     {
-        // Can the 'proof header' be packed into a single 256bit field?
-        // Solidity doesn't support Gcc style bit-packed struct fields
-        // But, it only matters if proof ever needs to be stored, which it shouldn't!
-
         uint64 block_id;
         uint32 tx_idx;
         uint32 log_idx;
@@ -112,11 +108,9 @@ contract LithiumProver
     }
 
 
-    function Verify( uint64 in_network_id, bytes32 in_leaf_hash, bytes in_proof_bytes )
+    function Verify( bytes32 in_leaf_hash, bytes in_proof_bytes )
         external view returns (bool)
     {
-        //require( in_network_id == m_link.GetNetworkId() );
-
         require( in_leaf_hash != 0x0 );
 
         Proof memory l_proof;
@@ -125,6 +119,7 @@ contract LithiumProver
 
         // Leaf is hashed with parameters from proof to make it unique to that proof
         bytes32 l_leaf_hash = keccak256(abi.encodePacked(
+            //uint64(m_link.GetNetworkId()),
             uint64(l_proof.block_id),
             uint32(l_proof.tx_idx),
             uint32(l_proof.log_idx),
@@ -132,16 +127,5 @@ contract LithiumProver
         ));
 
         return m_link.Verify( l_proof.block_id, uint256(l_leaf_hash), l_proof.path );
-    }
-
-
-    function Timestamp( bytes in_proof_bytes )
-        external view returns (uint256)
-    {
-        Proof memory l_proof;
-
-        l_proof.ExtractFromBytes(in_proof_bytes);
-
-        return l_proof.block_id;
     }
 }

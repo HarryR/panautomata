@@ -2,7 +2,6 @@ pragma solidity 0.4.24;
 
 import "truffle/Assert.sol";
 import "../contracts/LithiumProver.sol";
-import "../contracts/example/ExamplePingPong.sol";
 
 
 contract TestLithiumProver
@@ -38,20 +37,24 @@ contract TestLithiumProver
 
         bytes memory proof_bytes = hex"000000000000000a0000000000000000e6843bf393570479a2656a819bf8d219c1dde89fe0b6f73c6299bf202fe755d1";
 
-        uint256[] memory l_roots = new uint256[](1);
+        uint256[] memory l_roots = new uint256[](2);
         l_roots[0] = 18816486038835455661079455548344429740997917459031915165980477461056310113737;
+        l_roots[1] = 0x0ecee24d0107cfaa2eb4977d9a9c76e91c955b504820a15130928c180f3d3615;
 
-        uint block_height = 10;
+        uint64 block_height = 10;
 
         LithiumLink l_link = new LithiumLink(1, block_height - 1);
         l_link.Update(block_height - 1, l_roots);
         Assert.equal( l_link.GetHeight(), block_height, "Link height incorrect!" );
-        Assert.equal( l_link.GetRoot(block_height), l_roots[0], "Root incorrect!" );
+        Assert.equal( l_link.GetMerkleRoot(block_height), l_roots[0], "Root incorrect!" );
+
 
         // Check it's extracted properly
         LithiumProver.Proof memory l_proof;
         l_proof.ExtractFromBytes(proof_bytes);
-        Assert.equal( l_proof.block_id, block_height, "Block ID mismatch" );
+
+        Assert.equal( uint(l_proof.block_id), uint(block_height), "Block ID mismatch" );
+
         Assert.equal( l_link.GetHeight(), l_proof.block_id, "Link height incorrect!" );
 
         // Check the merkle root verifies
@@ -59,6 +62,7 @@ contract TestLithiumProver
 
         // Then verify that, when combining the two, it works
         LithiumProver l_prover = new LithiumProver(l_link);
-        Assert.equal( l_prover.Verify( 1, inner_leaf_hash, proof_bytes ), true, "LithiumProver failed" );
+
+        Assert.equal( l_prover.Verify( inner_leaf_hash, proof_bytes ), true, "LithiumProver failed" );
     }
 }

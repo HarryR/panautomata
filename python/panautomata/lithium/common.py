@@ -3,11 +3,16 @@
 # SPDX-License-Identifier: LGPL-3.0+
 
 import time
+from collections import namedtuple
+from binascii import unhexlify
 
 from ..crypto import keccak_256
 from ..ethrpc import EthTransaction
 from ..utils import scan_bin, require, u256be, u64be, u32be, bytes_to_int
 from ..merkle import merkle_tree, merkle_path, merkle_proof
+
+
+Block = namedtuple('Block', ('height', 'root', 'hash', 'items'))
 
 
 def pack_prefix(txn_or_log, log_idx=None):
@@ -115,21 +120,25 @@ def process_block(rpc, block_height):
     # XXX: given a processed block, we need to be able to easily identify the leaf
     #      for a specific transaction or event within a transaction
     block = rpc.eth_getBlockByNumber(block_height, False)
-    if not block['transactions']:
-        return [], 0, 0
 
     log_count = 0
     tx_count = 0
     items = []
+
     for tx_hash in block['transactions']:
         tx_items, tx_log_count = process_transaction_and_logs(rpc, tx_hash)
         if not tx_items:
+            # Some transactions result in no leaves, e.g. contract creation
             continue
         items += tx_items
         tx_count += 1
         log_count += tx_log_count
 
-    return items, tx_count, log_count
+    _, merkle_root = merkle_tree(items)
+
+    block_hash = bytes_to_int(unhexlify(block['hash'][2:]))
+
+    return Block(block_height, merkle_root, block_hash, items), tx_count, log_count
 
 
 def proof_for_event(rpc, tx_hash, log_idx):
@@ -143,15 +152,15 @@ def proof_for_event(rpc, tx_hash, log_idx):
     transaction = rpc.eth_getTransactionByHash(tx_hash)
     tx_block_height = int(transaction['blockNumber'], 16)
 
-    block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
+    block, tx_count, tx_log_count = process_block(rpc, tx_block_height)
 
-    tree, root = merkle_tree(block_items)
+    tree, root = merkle_tree(block.items)
 
     # TODO: verify the merkle root matches the on-chain merkle root submitted to LithiumLink
 
     event_leaf = tx_items[1 + log_idx]
     proof = merkle_path(event_leaf, tree)
-    require(merkle_proof(event_leaf, proof, root) is True, "Cannot confirm merkle proof")
+    require(merkle_proof(event_leaf, proof, block.root) is True, "Cannot confirm merkle proof")
 
     # Proof as accepted by LithiumProver instance
     prefix = pack_prefix(transaction, log_idx)
@@ -168,14 +177,14 @@ def proof_for_tx(rpc, tx_hash):
     transaction = rpc.eth_getTransactionByHash(tx_hash)
     tx_block_height = int(transaction['blockNumber'], 16)
 
-    block_items, block_tx_count, block_log_count = process_block(rpc, tx_block_height)
+    block, tx_count, tx_log_count = process_block(rpc, tx_block_height)
 
-    tree, root = merkle_tree(block_items)
+    tree, root = merkle_tree(block.items)
 
     # TODO: verify the merkle root matches the on-chain merkle root submitted to LithiumLink
 
     proof = merkle_path(tx_leaf, tree)
-    require(merkle_proof(tx_leaf, proof, root) is True, "Cannot confirm merkle proof")
+    require(merkle_proof(tx_leaf, proof, block.root) is True, "Cannot confirm merkle proof")
 
     # Proof as accepted by LithiumProver instance
     prefix = pack_prefix(transaction)
@@ -188,7 +197,7 @@ def verify_proof(root, leaf, proof):
     require((len(proof) - 16) >= 32)
     proof = proof[16:]
     path = []
-    while len(proof):
+    while proof:
         path.append(bytes_to_int(proof[:32]))
         proof = proof[32:]
 

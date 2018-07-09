@@ -83,14 +83,18 @@ contract LithiumLink
         public view returns (uint256 out_hash)
     {
         out_hash = m_blocks[in_height].block_hash;
+
+        require( out_hash != 0 );
     }
 
 
     function GetMerkleRoot( uint64 in_height )
         public view returns (uint256 out_root)
     {
-        out_root = m_blocks[in_height].merkle_root;
+        Block storage l_block = m_blocks[in_height];
 
-        require( out_root != 0 );
+        require( l_block.block_hash != 0 );
+
+        out_root = l_block.merkle_root;
     }
 }

@@ -1,3 +1,6 @@
+// Copyright (c) 2018 HarryR. All Rights Reserved.
+// SPDX-License-Identifier: GPL-3.0+
+
 pragma solidity 0.4.24;
 
 import "truffle/Assert.sol";

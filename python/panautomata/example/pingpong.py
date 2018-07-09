@@ -43,26 +43,32 @@ def main():
     start_tx_receipt = tx.wait()
     print("Start TX receipt", start_tx_receipt)
     start_proof = proof_for_tx(rpc_a, tx)
+    print("Start proof", start_proof)
 
     print("ReceiveStart")
     link_wait(link_b, start_proof)
     tx = bob.ReceiveStart(guid, session, start_proof)
-    tx.wait()
+    receive_start_receipt = tx.wait()
+    print("ReceiveStart receipt", receive_start_receipt)
     ping_proof = proof_for_event(rpc_b, tx, 0)
+    print("Ping proof", ping_proof)
 
     for _ in range(0, 5):
         print("ReceivePing")
         link_wait(link_a, ping_proof)
         tx = alice.ReceivePing(guid, ping_proof)
+        receive_ping_receipt = tx.wait()
+        print("ReceivePing Receipt", receive_ping_receipt)
         pong_proof = proof_for_event(rpc_a, tx, 0)
-        tx.wait()
+        print("Pong proof", pong_proof)
 
         print("ReceivePong")
         link_wait(link_b, pong_proof)
         tx = bob.ReceivePong(guid, pong_proof)
+        receive_pong_receipt = tx.wait()
+        print("ReceivePong receipt", receive_pong_receipt)
         ping_proof = proof_for_event(rpc_b, tx, 0)
-        receieve_pong_receipt = tx.wait()
-        print("ReceivePong receipt", receieve_pong_receipt)
+        print("Ping proof", ping_proof)
 
 
 if __name__ == "__main__":

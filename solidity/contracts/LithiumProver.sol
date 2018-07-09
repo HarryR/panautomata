@@ -85,7 +85,7 @@ library LithiumProofObj
 }
 
 
-contract LithiumProver
+contract LithiumProver is ProofVerifierInterface
 {
     using LithiumProofObj for Proof;
 

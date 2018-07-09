@@ -109,6 +109,9 @@ class Lithium(object):
                 start_height = block.height
             update_details += [block.root, block.hash]
 
+        onchain_height = self.contract.GetHeight()
+        require(onchain_height == start_height - 1, "Before submit Height mismatch")
+
         # Submit and wait for transaction to be mined / accepted
         transaction = self.contract.Update(start_height - 1, update_details)
         receipt = transaction.wait()
@@ -116,7 +119,7 @@ class Lithium(object):
             raise RuntimeError("Error when submitting blocks! Receipt: " + str(receipt))
 
         onchain_height = self.contract.GetHeight()
-        require(onchain_height == newest_block.height, "Height mismatch")
+        require(onchain_height == newest_block.height, "After submit Height mismatch")
 
         onchain_root = self.contract.GetMerkleRoot(onchain_height)
         require(onchain_root == newest_block.root, "Root mismatch")

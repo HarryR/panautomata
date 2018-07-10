@@ -11,9 +11,9 @@ All integers are encoded in big-endian format (most significant bit first).
 
 ## Proof Format
 
-|              |                   |           |          | optional | .. |
 | block height | transaction index | log index |  Path 0  |  Path N  | .. |
 | ------------ | ----------------- | --------- | -------- | -------- | -- |
+|              |                   |           |          | optional | .. |
 |   64 bits    |      32 bits      |  32 bits  | 32 bytes | 32 bytes | .. |
 |   integer    |      integer      |  integer  |          |          |    |
 
@@ -29,10 +29,10 @@ For Ethereum events and transactions only the absolutely necessary information i
 
 ## Transaction
 
-| from address | to address |  value   | HASH(selector || args) |
-| ------------ | -----------| -------- | ---------------------- |
-|  20 bytes    |  20 bytes  | 256 bits |       32 bytes         |
-|  address     |  address   | integer  |    keccak-256 hash     |
+| from address | to address |  value   | HASH(selector,args) |
+| ------------ | ---------- | -------- | ------------------- |
+|  20 bytes    |  20 bytes  | 256 bits |       32 byte       |
+|  address     |  address   | integer  |   keccak-256 hash   |
 
 ## Event
 

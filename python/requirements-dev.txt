@@ -5,3 +5,5 @@ coverage
 wheel
 mypy
 flake8
+coverage
+coveralls

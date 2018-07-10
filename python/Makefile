@@ -12,13 +12,16 @@ LITHIUM_A2B_ARGS = --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-fr
 LITHIUM_B2A_ARGS = --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.b2a.pid
 
 
+COVERAGE=$(PYTHON) -mcoverage run --source=$(NAME) -a
+
+
 #######################################################################
 
 
 all: essential-lint test bdist
 
 clean:
-	rm -rf build dist *.egg-info .mypy_cache *.pid
+	rm -rf build dist *.egg-info .mypy_cache *.pid htmlcov .coverage
 
 
 #######################################################################
@@ -38,26 +41,26 @@ bdist-egg:
 #
 
 lithium-a2b:
-	$(PYTHON) -m$(NAME) lithium $(LITHIUM_A2B_ARGS)
+	$(COVERAGE) -m $(NAME) lithium $(LITHIUM_A2B_ARGS)
 
 lithium-b2a:
-	$(PYTHON) -m$(NAME) lithium $(LITHIUM_B2A_ARGS)
+	$(COVERAGE) -m $(NAME) lithium $(LITHIUM_B2A_ARGS)
 
 lithium-%-stop: .lithium.%.pid
 	if [ -f $< ]; then kill -INT `cat $<` || true; fi; rm -f $<;
 
 example-tokenproxy:
-	$(PYTHON) -m$(NAME).example.tokenproxy
+	$(COVERAGE) -m $(NAME).example.tokenproxy
 
 example-pingpong:
-	$(PYTHON) -m$(NAME).example.pingpong
+	$(COVERAGE) -m $(NAME).example.pingpong
 
 example-swap:
-	$(PYTHON) -m$(NAME).example.swap
+	$(COVERAGE) -m $(NAME).example.swap
 
 .PHONY: test
 test:
-	$(PYTHON) -munittest discover test/
+	$(COVERAGE) -m unittest discover test/
 
 
 #######################################################################
@@ -74,6 +77,9 @@ requirements-dev:
 #######################################################################
 # Lint
 #
+
+coverage-report:
+	$(PYTHON) -mcoverage report
 
 # Unused variables, on error - should be fixed.
 lint-pyflakes:

@@ -24,7 +24,10 @@ end-to-end:
 
 	make -C python lithium-a2b > /dev/null &
 	make -C python lithium-b2a > /dev/null &
+
 	make -C python example-pingpong
+	make -C python example-tokenproxy
+
 	make stop-end-to-end
 
 stop-end-to-end:

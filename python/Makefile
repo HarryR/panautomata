@@ -46,6 +46,9 @@ lithium-b2a:
 lithium-%-stop: .lithium.%.pid
 	if [ -f $< ]; then kill -INT `cat $<` || true; fi; rm -f $<;
 
+example-tokenproxy:
+	$(PYTHON) -m$(NAME).example.tokenproxy
+
 example-pingpong:
 	$(PYTHON) -m$(NAME).example.pingpong
 

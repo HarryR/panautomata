@@ -44,18 +44,7 @@ contract ExampleCrossTokenLock
     using SafeMath for uint256;
 
 
-    mapping( bytes32 => uint256 ) m_deposits;
-
-
-    function HashRemoteContract (Panautoma.RemoteContract in_remote)
-        internal pure returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(
-            address(in_remote.prover),
-            in_remote.nid,
-            in_remote.addr)
-        );
-    }
+    mapping( bytes32 => uint256 ) internal m_deposits;
 
 
     function Deposit ( Panautoma.RemoteContract in_remote )
@@ -77,7 +66,7 @@ contract ExampleCrossTokenLock
         // Verify m_deposits is greater or equal to withdraw amount
         bytes32 l_rchash = HashRemoteContract(in_remote);
 
-        require( m_deposits[l_rchash] > in_amount );
+        require( m_deposits[l_rchash] >= in_amount );
 
         bool tx_ok = in_remote.VerifyTransaction(
             msg.sender,
@@ -92,6 +81,18 @@ contract ExampleCrossTokenLock
 
         msg.sender.transfer(in_amount);
     }
+
+
+    function HashRemoteContract (Panautoma.RemoteContract in_remote)
+        internal pure returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(
+            address(in_remote.prover),
+            in_remote.nid,
+            in_remote.addr)
+        );
+    }
+
 }
 
 
@@ -109,20 +110,20 @@ contract ExampleCrossTokenProxy is StandardToken
     using SafeMath for uint256;
 
 
-    function Redeem ( Panautoma.RemoteContract in_remote, uint256 in_amount, bytes in_proof )
+    function Redeem ( Panautoma.RemoteContract in_lock_remote, Panautoma.RemoteContract in_self_remote, uint256 in_amount, bytes in_proof )
         public
     {
         // Proof of Deposit allows Redeem on this chain
 
         // Remote contract must be ourselves
-        require( in_remote.addr == address(this) );
+        require( in_self_remote.addr == address(this) );
 
         // Proof of a Deposit transaction on the other side
-        bool tx_ok = in_remote.VerifyTransaction(
+        bool tx_ok = in_lock_remote.VerifyTransaction(
             msg.sender,
             in_amount,
             bytes4(ExampleCrossTokenLock(this).Deposit.selector),
-            abi.encode(in_remote),
+            abi.encode(in_self_remote),
             in_proof
         );
         require( tx_ok );

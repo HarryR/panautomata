@@ -11,7 +11,7 @@ ABI_CONTRACTS = ExampleSwap LithiumLink LithiumProver ExampleERC20Token
 ABI_FILES = $(addsuffix .abi,$(addprefix abi/,$(ABI_CONTRACTS)))
 
 
-all: check-prereqs node_modules lint test coverage
+all: check-prereqs node_modules lint test
 
 .PHONY: abi
 abi: $(ABI_FILES)

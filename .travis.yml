@@ -9,7 +9,7 @@ script:
   - make -C solidity
   - make end-to-end
 after_success:
-  - cd python; coveralls
+  - cd python; make coverage-combine coverage-report; coveralls
 notifications:
   webhooks:
     urls:

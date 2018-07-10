@@ -12,7 +12,7 @@ LITHIUM_A2B_ARGS = --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-fr
 LITHIUM_B2A_ARGS = --account 0xffcf8fdee72ac11b5c542428b35eef5769c409f0 --rpc-from 127.0.0.1:8546 --rpc-to 127.0.0.1:8545 --contract 0xcfeb869f69431e42cdb54a4f4f105c19c080a601 --pid .lithium.b2a.pid
 
 
-COVERAGE=$(PYTHON) -mcoverage run --source=$(NAME) -a
+COVERAGE=$(PYTHON) -mcoverage run --source=$(NAME) -a -p
 
 
 #######################################################################
@@ -77,6 +77,9 @@ requirements-dev:
 #######################################################################
 # Lint
 #
+
+coverage-combine:
+	$(PYTHON) -mcoverage combine
 
 coverage-report:
 	$(PYTHON) -mcoverage report

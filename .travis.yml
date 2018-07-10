@@ -1,6 +1,10 @@
 language: python
 python:
   - '3.6'
+cache:
+  pip: true
+  directories:
+    - solidity/node_modules
 install:
   - make -C python requirements requirements-dev
   - make -C solidity npm-install
@@ -9,7 +13,7 @@ script:
   - make -C solidity
   - make end-to-end
 after_success:
-  - cd python; coveralls
+  - cd python; make coverage-combine; coveralls
 notifications:
   webhooks:
     urls:

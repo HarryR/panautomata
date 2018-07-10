@@ -8,6 +8,8 @@ script:
   - make -C python
   - make -C solidity
   - make end-to-end
+after_success:
+  - cd python; coveralls
 notifications:
   webhooks:
     urls:

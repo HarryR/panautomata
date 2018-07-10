@@ -1,6 +1,6 @@
-# Panautoma 
+# Panautomata
 
-[![Build Status](https://travis-ci.org/HarryR/panautomata.svg?branch=master)](https://travis-ci.org/HarryR/panautomata)
+[![Build Status](https://travis-ci.org/HarryR/panautomata.svg?branch=master)](https://travis-ci.org/HarryR/panautomata) [![Join the chat at https://gitter.im/HarryR/panautomata](https://badges.gitter.im/harryr/panautomata.svg)](https://gitter.im/harryr/panautomata?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is a research project to make it easy for developers to write smart contracts which run across multiple block-chains without the complex underlying logic that makes it possible.
 

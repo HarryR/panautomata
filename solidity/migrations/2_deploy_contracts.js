@@ -6,6 +6,8 @@ const ExampleERC20Token = artifacts.require("ExampleERC20Token");
 const ExamplePingPongA = artifacts.require("ExamplePingPongA");
 const ExamplePingPongB = artifacts.require("ExamplePingPongB");
 const Registrar = artifacts.require("Registrar");
+const ExampleCrossTokenLock = artifacts.require("ExampleCrossTokenLock");
+const ExampleCrossTokenProxy = artifacts.require("ExampleCrossTokenProxy");
 
 module.exports = async (deployer, network, accounts) => {
     await deployer.deploy(MockProofVerifier);
@@ -20,4 +22,7 @@ module.exports = async (deployer, network, accounts) => {
     await deployer.deploy(LithiumProver, link.address);
 
     await deployer.deploy(Registrar, accounts[0]);
+
+    await deployer.deploy(ExampleCrossTokenLock);
+    await deployer.deploy(ExampleCrossTokenProxy);
 };

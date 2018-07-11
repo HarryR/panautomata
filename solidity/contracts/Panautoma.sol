@@ -18,6 +18,16 @@ library Panautoma
 
 library RemoteContractLib
 {
+    function GUID (Panautoma.RemoteContract self)
+        internal pure returns (bytes32)
+    {
+        return keccak256(abi.encodePacked(
+            address(self.prover),
+            self.nid,
+            self.addr)
+        );
+    }
+
     function VerifyEvent( Panautoma.RemoteContract self, bytes32 in_event_sig, bytes in_event_args, bytes in_proof )
         internal view returns (bool)
     {

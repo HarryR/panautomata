@@ -13,7 +13,13 @@ The relevent source code files are:
 
 ![Cross Token State Diagram](https://i.imgur.com/HSzZTcJ.png)
 
-Source code for use with WebSequenceDiagrams.com
+Alice and Bob can use their key pair / account on both Chain A and Chain B.
+
+However, the Lock contract only exists on Chain A, and the Token contract only exists on chain B.
+
+The `Lithium` contract is really two daemons and two contracts, but it's represented here as a single entity. It compiles events from chain A and publishes the merkle roots on chain B, and visa versa.
+
+Source code for use with WebSequenceDiagrams.com:
 
 ```
 title Cross Token

@@ -84,6 +84,9 @@ coverage-combine:
 coverage-report:
 	$(PYTHON) -mcoverage report
 
+coverage-html:
+	$(PYTHON) -mcoverage html
+
 # Unused variables, on error - should be fixed.
 lint-pyflakes:
 	$(PYTHON) -mpyflakes $(NAME)

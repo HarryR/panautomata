@@ -8,3 +8,4 @@ dist/
 *.pid
 *.log
 .coverage
+htmlcov/

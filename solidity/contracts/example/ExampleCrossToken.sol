@@ -84,6 +84,12 @@ contract ExampleCrossTokenLock
 }
 
 
+// TODO: add a factory contract which creates the token contracts for each source
+//       you query the main contract for which contract exists that can be a proxy
+//       if it returns none, then you tell it to create a contract, which can be used
+//       in future if you request tokens from the same source.
+
+
 /**
 * The proxy token contract allows others to redeem tokens of
 * equivalent value if deposited on the original chain.

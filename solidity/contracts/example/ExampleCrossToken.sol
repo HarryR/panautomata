@@ -52,7 +52,7 @@ contract ExampleCrossTokenLock
     {
         // Deposit creates proof that value has been locked
 
-        bytes32 l_rchash = HashRemoteContract(in_remote);
+        bytes32 l_rchash = in_remote.GUID();
 
         m_deposits[l_rchash] = m_deposits[l_rchash].add(msg.value);
     }
@@ -63,9 +63,9 @@ contract ExampleCrossTokenLock
     {
         // Proof of Burn allows Withdraw
 
-        // Verify m_deposits is greater or equal to withdraw amount
-        bytes32 l_rchash = HashRemoteContract(in_remote);
+        bytes32 l_rchash = in_remote.GUID();
 
+        // Verify m_deposits is greater or equal to withdraw amount
         require( m_deposits[l_rchash] >= in_amount );
 
         bool tx_ok = in_remote.VerifyTransaction(
@@ -81,19 +81,13 @@ contract ExampleCrossTokenLock
 
         msg.sender.transfer(in_amount);
     }
-
-
-    function HashRemoteContract (Panautoma.RemoteContract in_remote)
-        internal pure returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(
-            address(in_remote.prover),
-            in_remote.nid,
-            in_remote.addr)
-        );
-    }
-
 }
+
+
+// TODO: add a factory contract which creates the token contracts for each source
+//       you query the main contract for which contract exists that can be a proxy
+//       if it returns none, then you tell it to create a contract, which can be used
+//       in future if you request tokens from the same source.
 
 
 /**
@@ -109,13 +103,20 @@ contract ExampleCrossTokenProxy is StandardToken
 
     using SafeMath for uint256;
 
-    // XXX/SECURITY: this allows tokens of mixed origins to be mixed together
-    // This contract must be locked to a specific remote contract upon first use.
+    bytes32 internal m_locked_to;
 
+
+    // Proof of Deposit allows Redeem on this chain
     function Redeem ( Panautoma.RemoteContract in_lock_remote, Panautoma.RemoteContract in_self_remote, uint256 in_amount, bytes in_proof )
         public
     {
-        // Proof of Deposit allows Redeem on this chain
+        // Upon first redemption this contract is locked to a specific remote
+        // lock contract, this prevents mixing of tokens from multiple sources.
+        if (m_locked_to != 0x0) {
+            require( m_locked_to == in_lock_remote.GUID() );
+        } else {
+            m_locked_to = in_lock_remote.GUID();
+        }
 
         // Remote contract must be ourselves
         require( in_self_remote.addr == address(this) );

@@ -61,7 +61,7 @@ def main():
     # Sends proof of Ping from B to A
     # Then proof of Pong from A to B
     # Repeated ad infinitum
-    for _ in range(0, 5):
+    for _ in range(0, 3):
         # Provide proof of the 'Ping' event
         print("ReceivePing")
         link_wait(link_a, ping_proof)

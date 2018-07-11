@@ -21,7 +21,7 @@ COVERAGE=$(PYTHON) -mcoverage run --source=$(NAME) -p
 all: essential-lint test bdist
 
 clean:
-	rm -rf build dist *.egg-info .mypy_cache *.pid htmlcov .coverage
+	rm -rf build dist *.egg-info .mypy_cache *.pid htmlcov .coverage .coverage.*
 
 
 #######################################################################
@@ -83,6 +83,9 @@ coverage-combine:
 
 coverage-report:
 	$(PYTHON) -mcoverage report
+
+coverage-html:
+	$(PYTHON) -mcoverage html
 
 # Unused variables, on error - should be fixed.
 lint-pyflakes:

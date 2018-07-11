@@ -109,6 +109,8 @@ contract ExampleCrossTokenProxy is StandardToken
 
     using SafeMath for uint256;
 
+    // XXX/SECURITY: this allows tokens of mixed origins to be mixed together
+    // This contract must be locked to a specific remote contract upon first use.
 
     function Redeem ( Panautoma.RemoteContract in_lock_remote, Panautoma.RemoteContract in_self_remote, uint256 in_amount, bytes in_proof )
         public

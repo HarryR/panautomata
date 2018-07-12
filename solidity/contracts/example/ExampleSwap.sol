@@ -169,7 +169,7 @@ contract ExampleSwap
 
         // Transfer must occur after storing swap to storage
         // Otherwise Swap will still be in Invalid state...
-        SafeTransfer( in_swap.alice.token, in_swap.alice.addr, address(this), in_swap.alice.amount );
+        SafeTransferFrom( in_swap.alice.token, in_swap.alice.addr, address(this), in_swap.alice.amount );
 
         return true;
     }
@@ -258,7 +258,7 @@ contract ExampleSwap
 
         swap.state = State.AliceWithdraw;
 
-        SafeTransfer( swap.bob.token, address(this), swap.alice.addr, swap.bob.amount );
+        SafeTransfer( swap.bob.token, swap.alice.addr, swap.bob.amount );
 
         emit OnAliceWithdraw( in_guid );
     }
@@ -290,7 +290,7 @@ contract ExampleSwap
 
         swaps[in_guid] = in_swap;
 
-        SafeTransfer( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
+        SafeTransferFrom( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
 
         emit OnBobAccept( in_guid );
     }
@@ -301,6 +301,8 @@ contract ExampleSwap
     {
         // Swap must not already exist on Bobs chain to Reject
         require( SwapDoesNotExist(in_guid) );
+
+        require( in_swap.state == State.AlicePropose );
 
         require( in_swap.bob.swap_contract.addr == address(this) );
 
@@ -329,7 +331,7 @@ contract ExampleSwap
         swap.state = State.BobWithdraw;
 
         // Transfer the funds Alice deposited to Bob
-        SafeTransfer( swap.alice.token, address(this), swap.bob.addr, swap.alice.amount );
+        SafeTransfer( swap.alice.token, swap.bob.addr, swap.alice.amount );
 
         emit OnBobWithdraw( in_guid );
     }
@@ -353,6 +355,7 @@ contract ExampleSwap
         internal view returns (Swap storage out_swap)
     {
         out_swap = swaps[in_swap_id];
+
         require( out_swap.state != State.Invalid );
     }
 
@@ -361,6 +364,7 @@ contract ExampleSwap
         internal view returns (Swap storage out_swap)
     {
         out_swap = swaps[in_swap_id];
+
         require( out_swap.state == state );
     }
 
@@ -370,12 +374,29 @@ contract ExampleSwap
     * Verifies the balance has been incremented correctly after the transfer
     * Some broken tokens don't return 'true', this works around it.
     */
-    function SafeTransfer (ERC20 in_currency, address in_from, address in_to, uint256 in_value )
+    function SafeTransferFrom (ERC20 in_currency, address in_from, address in_to, uint256 in_value )
         internal
     {
         uint256 balance_before = in_currency.balanceOf(in_to);
 
         require( in_currency.transferFrom(in_from, in_to, in_value) );
+
+        uint256 balance_after = in_currency.balanceOf(in_to);
+
+        require( (balance_after - balance_before) == in_value );
+    }
+
+    /**
+    * Performs a 'safer' ERC20 transferFrom call
+    * Verifies the balance has been incremented correctly after the transfer
+    * Some broken tokens don't return 'true', this works around it.
+    */
+    function SafeTransfer (ERC20 in_currency, address in_to, uint256 in_value )
+        internal
+    {
+        uint256 balance_before = in_currency.balanceOf(in_to);
+
+        require( in_currency.transfer(in_to, in_value) );
 
         uint256 balance_after = in_currency.balanceOf(in_to);
 

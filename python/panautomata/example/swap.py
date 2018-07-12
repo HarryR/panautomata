@@ -49,6 +49,7 @@ def main():
     token_a.approve(SWAP_CONTRACT, alice_value).wait(raise_on_error=True)
     require(token_a.allowance(ACCOUNT_ALICE, SWAP_CONTRACT) == alice_value)
 
+
     # Create Bob's tokens, approve swap contract to use them
     print("B: mint + approve")
     bob_balance_begin = token_b.balanceOf(ACCOUNT_BOB)
@@ -60,12 +61,14 @@ def main():
     token_b.approve(SWAP_CONTRACT, bob_value).wait(raise_on_error=True)
     require(token_b.allowance(ACCOUNT_BOB, SWAP_CONTRACT) == bob_value)
 
+
     # Session struct
     RC_ALICE = (PROVER_ADDR, 1, SWAP_CONTRACT)
     RC_BOB = (PROVER_ADDR, 1, SWAP_CONTRACT)
     SESSION_SIDE_ALICE = ((RC_ALICE), TOKEN_CONTRACT, ACCOUNT_ALICE, alice_value)
     SESSION_SIDE_BOB = ((RC_BOB), TOKEN_CONTRACT, ACCOUNT_BOB, bob_value)
     SESSION = (1, SESSION_SIDE_ALICE, SESSION_SIDE_BOB)
+
 
     # On chain A, perform Propose as Alice
     alice_balance_before_propose = token_a.balanceOf(ACCOUNT_ALICE)
@@ -80,6 +83,7 @@ def main():
     # Verify Alice's balance has reduced
     require(token_a.balanceOf(ACCOUNT_ALICE) == (alice_balance_before_propose - alice_value))
     require(token_a.balanceOf(SWAP_CONTRACT) == (swap_balance_before_propose + alice_value))
+
 
     # On chain B, perform Accept as Bob
     link_wait(link_b, propose_proof)
@@ -96,26 +100,33 @@ def main():
     require(token_b.balanceOf(ACCOUNT_BOB) == (bob_balance_before_accept - bob_value))
     require(token_b.balanceOf(SWAP_CONTRACT) == (swap_balance_before_accept + bob_value))
 
-    # On chain B, perform Withdraw as Alice
-    print("B: Alice Withdraw")
-    alice_withdraw_tx = swap_b.TransitionAliceWithdraw(swap_guid)
-    alice_withdraw_receipt = alice_withdraw_tx.wait(raise_on_error=True)
-    print(" - alice withdraw receipt", alice_withdraw_receipt)
-
-    # Verify Alice now has bob's tokens
-    require(token_b.balanceOf(ACCOUNT_ALICE) == bob_value)
-    require(token_b.balanceOf(SWAP_CONTRACT) == 0)
 
     # On chain A, perform Withdraw as Bob
     print("A: Bob Withdraw")
+    bob_balance_before_withdraw = token_a.balanceOf(ACCOUNT_BOB)
+    swap_a_balance_before_withdraw = token_a.balanceOf(SWAP_CONTRACT)
     link_wait(link_a, accept_proof)
     bob_withdraw_tx = swap_a.TransitionBobWithdraw(swap_guid, accept_proof)
     bob_withdraw_receipt = bob_withdraw_tx.wait(raise_on_error=True)
     print(" - bob withdraw receipt", bob_withdraw_receipt)
 
     # Verify Bob now has Alice's tokens
-    require(token_a.balanceOf(ACCOUNT_BOB) == alice_value)
-    require(token_a.balanceOf(SWAP_CONTRACT) == 0)
+    require(token_a.balanceOf(ACCOUNT_BOB) == (bob_balance_before_withdraw + alice_value))
+    require(token_a.balanceOf(SWAP_CONTRACT) == (swap_a_balance_before_withdraw - alice_value))
+
+
+    # On chain B, perform Withdraw as Alice
+    print("B: Alice Withdraw")
+    alice_balance_before_withdraw = token_b.balanceOf(ACCOUNT_ALICE)
+    swap_b_balance_before_withdraw = token_b.balanceOf(SWAP_CONTRACT)
+    alice_withdraw_tx = swap_b.TransitionAliceWithdraw(swap_guid)
+    alice_withdraw_receipt = alice_withdraw_tx.wait(raise_on_error=True)
+    print(" - alice withdraw receipt", alice_withdraw_receipt)
+
+    # Verify Alice now has bob's tokens
+    require(token_b.balanceOf(ACCOUNT_ALICE) == (alice_balance_before_withdraw + bob_value))
+    require(token_b.balanceOf(SWAP_CONTRACT) == (swap_b_balance_before_withdraw - bob_value))
+
 
 
 if __name__ == "__main__":

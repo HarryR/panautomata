@@ -161,6 +161,8 @@ contract ExampleSwap
     {
         require( SwapDoesNotExist(in_guid) );
 
+        require( in_swap.state == State.AlicePropose );
+
         require( in_swap.alice.swap_contract.addr == address(this) );
 
         swaps[in_guid] = in_swap;
@@ -184,6 +186,8 @@ contract ExampleSwap
         require( SwapDoesNotExist(in_guid) );
 
         require( in_swap.bob.swap_contract.addr == address(this) );
+
+        in_swap.state = State.AliceCancel;
 
         swaps[in_guid] = in_swap;
 
@@ -269,7 +273,11 @@ contract ExampleSwap
         // Swap must not already exist on Bobs chain to Accept
         require( SwapDoesNotExist(in_guid) );
 
+        require( in_swap.state == State.AlicePropose );
+
         require( in_swap.bob.swap_contract.addr == address(this) );
+
+        in_swap.state = State.BobAccept;
 
         swaps[in_guid] = in_swap;
 
@@ -295,6 +303,8 @@ contract ExampleSwap
         require( SwapDoesNotExist(in_guid) );
 
         require( in_swap.bob.swap_contract.addr == address(this) );
+
+        in_swap.state = State.BobReject;
 
         swaps[in_guid] = in_swap;
 

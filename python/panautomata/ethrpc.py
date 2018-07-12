@@ -123,14 +123,14 @@ class EthTransaction(namedtuple('_TxStruct', ('rpc', 'txid'))):
             txid = '0x' + txid
         return self.rpc.eth_getTransactionByHash(txid)
 
-    def wait(self):
-        return self.receipt(wait=True)
+    def wait(self, raise_on_error=False):
+        return self.receipt(wait=True, raise_on_error=raise_on_error)
 
     def success(self, wait=True):
         receipt = self.receipt(wait=wait)
         return receipt['status'] != '0x0'
 
-    def receipt(self, wait=False, tick_fn=None):
+    def receipt(self, wait=False, tick_fn=None, raise_on_error=False):
         # TODO: add `timeout` param
         first = True
         txid = self.txid
@@ -140,6 +140,8 @@ class EthTransaction(namedtuple('_TxStruct', ('rpc', 'txid'))):
             receipt = self.rpc.eth_getTransactionReceipt(txid)
             # TODO: turn into asynchronous notification / future
             if receipt:
+                if raise_on_error and receipt['status'] == '0x0':
+                    raise RuntimeError("Receipt error! - " + receipt)
                 return receipt
             if not wait:
                 break

@@ -8,6 +8,11 @@ contract ExampleERC20Token is MintableToken {
     string public symbol = "TEST";
     uint8 public decimals = 18;
 
+    modifier hasMintPermission() {
+        _;
+    }
+
+
     function getCurrentOwner() public view returns (address) {
         return msg.sender;
     }

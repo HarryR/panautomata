@@ -141,7 +141,7 @@ class EthTransaction(namedtuple('_TxStruct', ('rpc', 'txid'))):
             # TODO: turn into asynchronous notification / future
             if receipt:
                 if raise_on_error and receipt['status'] == '0x0':
-                    raise RuntimeError("Receipt error! - " + receipt)
+                    raise RuntimeError("Receipt error! - " + str(receipt))
                 return receipt
             if not wait:
                 break

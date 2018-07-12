@@ -27,6 +27,7 @@ end-to-end:
 
 	make -C python example-pingpong
 	make -C python example-tokenproxy
+	make -C python example-swap
 
 	make stop-end-to-end
 

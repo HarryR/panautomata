@@ -187,10 +187,6 @@ contract ExampleSwap
 
         require( in_swap.bob.swap_contract.addr == address(this) );
 
-        in_swap.state = State.AliceCancel;
-
-        swaps[in_guid] = in_swap;
-
         require( in_swap.alice.swap_contract.VerifyTransaction(
             in_swap.alice.addr,                 // from
             0,                                  // value
@@ -198,6 +194,10 @@ contract ExampleSwap
             abi.encode(in_guid, in_swap),       // args
             in_proof                            // proof
         ));
+
+        in_swap.state = State.AliceCancel;
+
+        swaps[in_guid] = in_swap;
 
         emit OnAliceCancel( in_guid );
     }
@@ -211,7 +211,7 @@ contract ExampleSwap
     {
         Swap storage swap = GetSwap(in_guid);
 
-        require( swap.alice.swap_contract.addr == address(this) );
+        require( swap.bob.swap_contract.addr == address(this) );
 
         require( swap.state == State.AlicePropose );
 
@@ -231,7 +231,7 @@ contract ExampleSwap
     {
         Swap storage swap = GetSwap(in_guid);
 
-        require( swap.alice.swap_contract.addr == address(this) );
+        require( swap.bob.swap_contract.addr == address(this) );
 
         require( swap.state == State.AlicePropose );
 
@@ -250,7 +250,7 @@ contract ExampleSwap
     {
         Swap storage swap = GetSwap(in_guid);
 
-        require( swap.alice.swap_contract.addr == address(this) );
+        require( swap.bob.swap_contract.addr == address(this) );
 
         require( swap.state == State.BobAccept );
 
@@ -258,7 +258,7 @@ contract ExampleSwap
 
         swap.state = State.AliceWithdraw;
 
-        SafeTransfer( swap.bob.token, address(this), swap.bob.addr, swap.bob.amount );
+        SafeTransfer( swap.bob.token, address(this), swap.alice.addr, swap.bob.amount );
 
         emit OnAliceWithdraw( in_guid );
     }
@@ -277,18 +277,18 @@ contract ExampleSwap
 
         require( in_swap.bob.swap_contract.addr == address(this) );
 
+        // Must provide proof of OnAlicePropose
+        require( in_swap.alice.swap_contract.VerifyTransaction(
+            in_swap.alice.addr,                     // from
+            0,                                      // value
+            this.TransitionAlicePropose.selector,   // selector
+            abi.encode(in_guid, in_swap),           // args
+            in_proof                                // proof
+        ) );
+
         in_swap.state = State.BobAccept;
 
         swaps[in_guid] = in_swap;
-
-        // Must provide proof of OnAlicePropose
-        require( in_swap.alice.swap_contract.VerifyTransaction(
-            in_swap.alice.addr,                 // from
-            0,                                  // value
-            this.TransitionAlicePropose.selector,    // selector
-            abi.encode(in_guid, in_swap),       // args
-            in_proof                            // proof
-        ) );
 
         SafeTransfer( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
 
@@ -321,10 +321,10 @@ contract ExampleSwap
         // Swap must exist on Bobs chain to Withdraw
         Swap storage swap = GetSwapInState(in_guid, State.AlicePropose);
 
-        require( swap.bob.swap_contract.addr == address(this) );
+        require( swap.alice.swap_contract.addr == address(this) );
 
         // Must provide proof of BobAccept
-        require( swap.bob.swap_contract.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encodePacked(in_guid), in_proof ) );
+        require( swap.bob.swap_contract.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encode(in_guid), in_proof ) );
 
         swap.state = State.BobWithdraw;
 

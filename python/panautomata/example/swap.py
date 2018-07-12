@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0+
 
 from random import randint
+from binascii import hexlify
 
 from ..utils import require
 from ..ethrpc import EthJsonRpc
@@ -74,7 +75,7 @@ def main():
     propose_receipt = propose_tx.wait(raise_on_error=True)
     propose_proof = proof_for_tx(rpc_a, propose_tx)
     print(" - propose receipt", propose_receipt)
-    print(" - propose proof", propose_proof)
+    print(" - propose proof", hexlify(propose_proof))
 
     # Verify Alice's balance has reduced
     require(token_a.balanceOf(ACCOUNT_ALICE) == (alice_balance_before_propose - alice_value))
@@ -82,21 +83,23 @@ def main():
 
     # On chain B, perform Accept as Bob
     link_wait(link_b, propose_proof)
+    bob_balance_before_accept = token_b.balanceOf(ACCOUNT_BOB)
+    swap_balance_before_accept = token_b.balanceOf(SWAP_CONTRACT)
     print("B: Accept")
     accept_tx = swap_b.TransitionBobAccept(swap_guid, SESSION, propose_proof)
     accept_receipt = accept_tx.wait(raise_on_error=True)
     accept_proof = proof_for_event(rpc_b, accept_tx, 0)
     print(" - accept receipt", accept_receipt)
-    print(" - accept proof", accept_proof)
+    print(" - accept proof", hexlify(accept_proof))
 
     # Verify Bob's balance has reduced
-    require(token_b.balanceOf(ACCOUNT_BOB) == 0)
-    require(token_b.balanceOf(SWAP_CONTRACT) == bob_value)
+    require(token_b.balanceOf(ACCOUNT_BOB) == (bob_balance_before_accept - bob_value))
+    require(token_b.balanceOf(SWAP_CONTRACT) == (swap_balance_before_accept + bob_value))
 
     # On chain B, perform Withdraw as Alice
     print("B: Alice Withdraw")
     alice_withdraw_tx = swap_b.TransitionAliceWithdraw(swap_guid)
-    alice_withdraw_receipt = alice_withdraw_tx.wait()
+    alice_withdraw_receipt = alice_withdraw_tx.wait(raise_on_error=True)
     print(" - alice withdraw receipt", alice_withdraw_receipt)
 
     # Verify Alice now has bob's tokens
@@ -107,7 +110,7 @@ def main():
     print("A: Bob Withdraw")
     link_wait(link_a, accept_proof)
     bob_withdraw_tx = swap_a.TransitionBobWithdraw(swap_guid, accept_proof)
-    bob_withdraw_receipt = bob_withdraw_tx.wait()
+    bob_withdraw_receipt = bob_withdraw_tx.wait(raise_on_error=True)
     print(" - bob withdraw receipt", bob_withdraw_receipt)
 
     # Verify Bob now has Alice's tokens

@@ -1,9 +1,15 @@
 # Copyright (c) 2018 HarryR. All Rights Reserved.
 # SPDX-License-Identifier: GPL-3.0+
 
+from random import randint
 from enum import IntEnum
 
-import click
+
+SWAP_CONTRACT = '0x254dffcd3277c0b1660f6d42efbb754edababc2b'
+TOKEN_CONTRACT = '0xc89ce4735882c9f0f0fe26686c53074e09b0d550'
+
+ACCOUNT_A = '0x90f8bf6a479f320ead074411a4b0e7944ea8c9c1'
+ACCOUNT_B = '0xffcf8fdee72ac11b5c542428b35eef5769c409f0'
 
 
 class SwapState(IntEnum):
@@ -100,50 +106,19 @@ class SwapManager(object):
         return SwapProposal(swap, proposal)
 
 
-@click.command(help="Alice Propose")
-def alice_propose():
-    pass
+def main():
+    rpc_a = EthJsonRpc('127.0.0.1', 8545)
+    link_a = rpc_a.proxy('../solidity/build/contracts/LithiumLink.json', LINK_ADDRESS)
+    swap_a = rpc_a.proxy('../solidity/build/contracts/ExampleSwap.json', SWAP_CONTRACT, ACCOUNT_A)
+    token_a = rpc_a.proxy('../solidity/build/contracts/ExampleERC20Token.json', TOKEN_CONTRACT ACCOUNT_A)
 
+    rpc_b = EthJsonRpc('127.0.0.1', 8546)
+    link_b = rpc_b.proxy('../solidity/build/contracts/LithiumLink.json', LINK_ADDRESS)
+    swap_b = rpc_b.proxy('../solidity/build/contracts/ExampleSwap.json', SWAP_CONTRACT ACCOUNT_B)
+    token_b = rpc_b.proxy('../solidity/build/contracts/ExampleERC20Token.json', TOKEN_CONTRACT ACCOUNT_B)
 
-@click.command(help="Alice Cancel")
-def alice_cancel():
-    pass
-
-
-@click.command()
-def alice_refund():
-    pass
-
-
-@click.command()
-def alice_withdraw():
-    pass
-
-
-@click.command()
-def bob_accept():
-    pass
-
-
-@click.command()
-def bob_reject():
-    pass
-
-
-@click.command()
-def bob_withdraw():
-    pass
-
-
-COMMANDS = click.Group("swap", help="ExampleSwap wrapper")
-COMMANDS.add_command(alice_propose)
-COMMANDS.add_command(alice_cancel)
-COMMANDS.add_command(alice_refund)
-COMMANDS.add_command(alice_withdraw)
-COMMANDS.add_command(bob_accept)
-COMMANDS.add_command(bob_reject)
-COMMANDS.add_command(bob_withdraw)
-
+    swap_guid = randint(1, 1<<255)
+    
 
 if __name__ == "__main__":
-    COMMANDS.main()
+    main()

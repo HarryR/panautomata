@@ -169,16 +169,13 @@ contract ExampleSwap
         // Otherwise Swap will still be in Invalid state...
         SafeTransfer( in_swap.alice.token, in_swap.alice.addr, address(this), in_swap.alice.amount );
 
-        // TODO: add more fields to OnAlicePropose event
-        // the event must have sufficient information to be provable on other chain
-        emit OnAlicePropose( in_guid, in_swap );
-
         return true;
     }
 
 
     /**
     * On Bobs chain, Alice pre-emptively cancels the swap
+    * Alice provides proof of TransitionAlicePropose on chain A to chain B
     */
     function TransitionAliceCancel ( uint256 in_guid, Swap in_swap, bytes in_proof )
         public
@@ -190,14 +187,22 @@ contract ExampleSwap
 
         swaps[in_guid] = in_swap;
 
-        // Must provide proof of OnAlicePropose
-        require( in_swap.alice.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
+        require( in_swap.alice.swap_contract.VerifyTransaction(
+            in_swap.alice.addr,                 // from
+            0,                                  // value
+            this.TransitionAlicePropose.selector,    // selector
+            abi.encode(in_guid, in_swap),       // args
+            in_proof                            // proof
+        ));
 
         emit OnAliceCancel( in_guid );
     }
 
 
-    function TransitionAliceRefund ( uint256 in_guid, bytes in_proof )
+    /**
+    * Alice provides proof of OnAliceCancel on chain B to chain A
+    */
+    function TransitionAliceRefundAfterCancel ( uint256 in_guid, bytes in_proof )
         public
     {
         Swap storage swap = GetSwap(in_guid);
@@ -206,8 +211,7 @@ contract ExampleSwap
 
         require( swap.state == State.AlicePropose );
 
-        // Must provide proof of OnAliceCancel or OnBobReject
-        require( swap.alice.swap_contract.VerifyEvent(SIG_ON_ALICE_CANCEL, abi.encodePacked(in_guid), in_proof) );
+        require( swap.bob.swap_contract.VerifyEvent(SIG_ON_ALICE_CANCEL, abi.encode(in_guid), in_proof) );
 
         swap.state = State.AliceRefund;
 
@@ -215,6 +219,28 @@ contract ExampleSwap
     }
 
 
+    /**
+    * Alice must provide proof of OnBobReject on chain B to chain A
+    */
+    function TransitionAliceRefundAfterReject ( uint256 in_guid, bytes in_proof )
+        public
+    {
+        Swap storage swap = GetSwap(in_guid);
+
+        require( swap.alice.swap_contract.addr == address(this) );
+
+        require( swap.state == State.AlicePropose );
+
+        require( swap.bob.swap_contract.VerifyEvent(SIG_ON_BOB_REJECT, abi.encode(in_guid), in_proof) );
+
+        swap.state = State.AliceRefund;
+
+        emit OnAliceRefund( in_guid );
+    }
+
+    /**
+    * As soon as Bob has accepted on chain B, Alice can withdraw from chain B
+    */
     function TransitionAliceWithdraw ( uint256 in_guid )
         public
     {
@@ -234,6 +260,9 @@ contract ExampleSwap
     }
 
 
+    /**
+    * Bob accepts Alice's proposal by providing proof of her TransitionAlicePropose transaction
+    */
     function TransitionBobAccept ( uint256 in_guid, Swap in_swap, bytes in_proof )
         public
     {
@@ -245,7 +274,13 @@ contract ExampleSwap
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.bob.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
+        require( in_swap.alice.swap_contract.VerifyTransaction(
+            in_swap.alice.addr,                 // from
+            0,                                  // value
+            this.TransitionAlicePropose.selector,    // selector
+            abi.encode(in_guid, in_swap),       // args
+            in_proof                            // proof
+        ) );
 
         SafeTransfer( in_swap.bob.token, in_swap.bob.addr, address(this), in_swap.bob.amount );
 
@@ -264,7 +299,7 @@ contract ExampleSwap
         swaps[in_guid] = in_swap;
 
         // Must provide proof of OnAlicePropose
-        require( in_swap.bob.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encodePacked(in_guid, EncodeSwap(in_swap)), in_proof) );
+        require( in_swap.alice.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encode(in_guid, in_swap), in_proof) );
 
         emit OnBobReject( in_guid );
     }
@@ -287,29 +322,6 @@ contract ExampleSwap
         SafeTransfer( swap.alice.token, address(this), swap.bob.addr, swap.alice.amount );
 
         emit OnBobWithdraw( in_guid );
-    }
-
-
-    function EncodeSwap ( Swap in_swap )
-        internal pure returns (bytes)
-    {
-        return abi.encodePacked(
-            address(in_swap.alice.swap_contract.prover),
-            in_swap.alice.swap_contract.nid,
-            in_swap.alice.swap_contract.addr,
-
-            address(in_swap.alice.token),
-            in_swap.alice.addr,
-            in_swap.alice.amount,
-
-            address(in_swap.bob.swap_contract.prover),
-            in_swap.bob.swap_contract.nid,
-            in_swap.bob.swap_contract.addr,
-
-            address(in_swap.bob.token),
-            in_swap.bob.addr,
-            in_swap.bob.amount
-        );
     }
 
 

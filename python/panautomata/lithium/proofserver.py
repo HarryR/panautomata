@@ -33,6 +33,10 @@ def main(rpc=None):
     if rpc is None:
         rpc = EthJsonRpc()
 
+    if not isinstance(rpc, EthJsonRpc):
+        host, port = rpc.split(':')
+        rpc = EthJsonRpc(host, port)
+
     proof_bp = ProofBlueprint(rpc)
 
     app = Flask(__name__)

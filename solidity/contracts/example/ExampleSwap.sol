@@ -135,25 +135,21 @@ contract ExampleSwap
 
     // Events emitted after state transitions
     event OnAlicePropose( uint256 guid, Swap swap );
-    bytes32 constant public SIG_ON_ALICE_PROPOSE = keccak256("OnAlicePropose(uint256)");
 
     event OnAliceWithdraw( uint256 guid );
-    bytes32 constant public SIG_ON_ALICE_WITHDRAW = keccak256("OnAliceWithdraw(uint256)");
 
     event OnAliceRefund( uint256 guid );
-    bytes32 constant public SIG_ON_ALICE_REFUND = keccak256("OnAliceRefund(uint256)");
 
     event OnAliceCancel( uint256 guid );
-    bytes32 constant public SIG_ON_ALICE_CANCEL = keccak256("OnAliceCancel(uint256)");
+    bytes32 constant public SIG_ON_ALICE_CANCEL = keccak256(abi.encodePacked("OnAliceCancel(uint256)"));
 
     event OnBobAccept( uint256 guid );
-    bytes32 constant public SIG_ON_BOB_ACCEPT = keccak256("OnBobAccept(uint256)");
+    bytes32 constant public SIG_ON_BOB_ACCEPT = keccak256(abi.encodePacked("OnBobAccept(uint256)"));
 
     event OnBobReject( uint256 guid );
-    bytes32 constant public SIG_ON_BOB_REJECT = keccak256("OnBobReject(uint256)");
+    bytes32 constant public SIG_ON_BOB_REJECT = keccak256(abi.encodePacked("OnBobReject(uint256)"));
 
     event OnBobWithdraw( uint256 guid );
-    bytes32 constant public SIG_ON_BOB_WITHDRAW = keccak256("OnBobWithdraw(uint256)");
 
   
     function TransitionAlicePropose ( uint256 in_guid, Swap in_swap )
@@ -188,11 +184,11 @@ contract ExampleSwap
         require( in_swap.bob.swap_contract.addr == address(this) );
 
         require( in_swap.alice.swap_contract.VerifyTransaction(
-            in_swap.alice.addr,                 // from
-            0,                                  // value
-            this.TransitionAlicePropose.selector,    // selector
-            abi.encode(in_guid, in_swap),       // args
-            in_proof                            // proof
+            in_swap.alice.addr,                     // from
+            0,                                      // value
+            this.TransitionAlicePropose.selector,   // selector
+            abi.encode(in_guid, in_swap),           // args
+            in_proof                                // proof
         ));
 
         in_swap.state = State.AliceCancel;
@@ -306,12 +302,17 @@ contract ExampleSwap
 
         require( in_swap.bob.swap_contract.addr == address(this) );
 
+        require( in_swap.alice.swap_contract.VerifyTransaction(
+            in_swap.alice.addr,                     // from
+            0,                                      // value
+            this.TransitionAlicePropose.selector,   // selector
+            abi.encode(in_guid, in_swap),           // args
+            in_proof                                // proof
+        ));
+
         in_swap.state = State.BobReject;
 
         swaps[in_guid] = in_swap;
-
-        // Must provide proof of OnAlicePropose
-        require( in_swap.alice.swap_contract.VerifyEvent(SIG_ON_ALICE_PROPOSE, abi.encode(in_guid, in_swap), in_proof) );
 
         emit OnBobReject( in_guid );
     }
@@ -326,7 +327,7 @@ contract ExampleSwap
         require( swap.alice.swap_contract.addr == address(this) );
 
         // Must provide proof of BobAccept
-        require( swap.bob.swap_contract.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encode(in_guid), in_proof ) );
+        require( true == swap.bob.swap_contract.VerifyEvent( SIG_ON_BOB_ACCEPT, abi.encode(in_guid), in_proof ) );
 
         swap.state = State.BobWithdraw;
 

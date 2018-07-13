@@ -134,6 +134,8 @@ def process_transaction_and_logs(rpc, tx_hash):
     items = [transaction]
 
     log_items, log_count = process_logs(rpc, tx_hash)
+    # print("Log items Hashed", [hexlify(keccak_256(_).digest()) for _ in log_items])
+    # print("Log items Unhashed", [hexlify(_) for _ in log_items])
     items += log_items
     return items, log_count
 

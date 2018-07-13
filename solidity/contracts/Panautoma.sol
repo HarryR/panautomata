@@ -33,11 +33,13 @@ library RemoteContractLib
     {
         // TODO: verify self.nid equals LithiumLink.NetworkId()
 
-        bytes32 leaf_hash = keccak256(abi.encodePacked(
+        bytes memory leaf_data = abi.encodePacked(
             self.addr,
             in_event_sig,   // topic
             keccak256(in_event_args)
-        ));
+        );
+
+        bytes32 leaf_hash = keccak256(leaf_data);
 
         return self.prover.Verify(leaf_hash, in_proof);
     }

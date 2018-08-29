@@ -31,6 +31,8 @@ Many thanks to [Matthew Di Ferrante](https://github.com/mattdf) and [Robert Sams
  * Terra-Bridge - https://medium.com/contractland/introducing-terra-bridge-cross-chain-value-transfers-d857cbb1ee71
  * Cosmos - https://cosmos.network/
  * Polkadot - https://polkadot.network/
+ * Proveth - https://github.com/lorenzb/proveth
+ * Ion - https://github.com/clearmatics/ion
 
 
 ### Related Papers / Resources
